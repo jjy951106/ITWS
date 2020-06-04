@@ -42,6 +42,10 @@ int main(int argc, char *argv[]){
     server_addr.sin_addr.s_addr = inet_addr(SERVER);
     server_addr.sin_port = htons(PORT);
 
+    if(argc >= 2) server_addr.sin_addr.s_addr = inet_addr(argv[1]);
+
+    if(argc == 3) server_addr.sin_port = htons(atoi(argv[2]));
+
     if(connect(sock, (struct sockaddr*)&server_addr, sizeof(server_addr)) == -1){
         printf("connect() failed\n");
         exit(1);

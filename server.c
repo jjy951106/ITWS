@@ -60,6 +60,8 @@ void *Server_Socket_Thread(void *arg){
 
     Thread_t--;
 
+    if(Thread_t == 0) Thread_t++;
+
     close(sock);
 }
 
@@ -81,6 +83,8 @@ int main(int argc, char *argv[]){
     server_addr.sin_family = AF_INET;
     server_addr.sin_addr.s_addr = htonl(INADDR_ANY);
     server_addr.sin_port = htons(PORT);
+
+    if(argc == 2) server_addr.sin_port = htons(atoi(argv[1]));
 
     if(bind(sock, (struct sockaddr*)&server_addr, sizeof(server_addr)) == -1){
         printf("bind() failed\n");
