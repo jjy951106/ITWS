@@ -3,14 +3,14 @@
 #include <stdio.h>
 #include <stdlib.h> // exit(0) 'normal' exit(1) 'error'
 #include <string.h>
-#include <stdint.h>
+#include <stdint.h> // int32_t int64_t
 
 #include <sys/time.h>
 #include <sys/socket.h>
 #include <sys/types.h>
 
 #include <pthread.h>
-#include <unistd.h>  // int32_t
+#include <unistd.h>  // sleep usleep
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
@@ -18,16 +18,14 @@
 #define PORT 5005
 
 #define ITERATION 5
-#define SPLEEP_TIME 100000000 // nanosecond
+#define SPLEEP_TIME 0 // nanosecond
 
-#define BOUNDARY 200000 // 양수
-#define BOUNDARY_ -200000 // 음수
+#define BOUNDARY 200000 // plus
+#define BOUNDARY_ -200000 // minus
 
 int main(int argc, char *argv[]){
 
-    int sock, tmp, iter;
-
-    int64_t offset = 0;
+    int sock, iter;
 
     struct sockaddr_in server_addr;
 
@@ -35,7 +33,7 @@ int main(int argc, char *argv[]){
 
     struct timespec s;
 
-    int64_t T[4], binary = 0x00;
+    int32_t tmp, offset[2], T[4], binary = 0x00;
 
     memset((int32_t *)&T, '\0', sizeof(T));
 
@@ -59,16 +57,19 @@ int main(int argc, char *argv[]){
 
     while(1){
 
+        offset[0] = 0;
+        offset[1] = 0;
+
         for(iter = 0; iter < ITERATION; iter++){
 
             clock_gettime(CLOCK_REALTIME, &T1);
 
-            if(send(sock, &binary, sizeof(binary) + 1, 0) == -1){
+            if(send(sock, &binary, sizeof(binary), 0) == -1){
                 printf("%d : send() failed\n", iter);
                 exit(1);
             }
 
-            if(recv(sock, T, sizeof(T) + 1, 0) == -1){ // code running stop until recv
+            if(recv(sock, T, sizeof(T), 0) == -1){ // code running stop until recv
                 printf("%d : recv() failed\n", iter);
                 exit(1);
             }
@@ -77,30 +78,32 @@ int main(int argc, char *argv[]){
 
             T2.tv_sec = T[0]; T2.tv_nsec = T[1]; T3.tv_sec = T[2]; T3.tv_nsec = T[3];
 
-            offset += (((T2.tv_sec - T1.tv_sec) * 1000000000 + T2.tv_nsec - T1.tv_nsec) -
-                      ((T4.tv_sec - T3.tv_sec) * 1000000000 + T4.tv_nsec - T3.tv_nsec));
+            offset[0] += ((T2.tv_sec - T1.tv_sec) - (T4.tv_sec - T3.tv_sec));
+
+            offset[1] += ((T2.tv_nsec - T1.tv_nsec) - (T4.tv_nsec - T3.tv_nsec));
 
             nanosleep(&s, NULL);
         }
 
-        offset /= (2 * ITERATION);
+        offset[0] /= (2 * ITERATION);
+        offset[1] /= (2 * ITERATION);
 
-        printf("offset : %d\n", (int)offset);
+        printf("offset : %d.%d\n", offset[0], offset[1]);
 
-        if(abs(offset) > 1000000000){
+        if(abs(offset[0]) > 0){
             clock_settime(CLOCK_REALTIME, &T3);
             sleep(2);
             continue;
         }
 
-        else if(offset < BOUNDARY && offset > BOUNDARY_){
-            printf("%dns", offset);
+        else if(offset[1] < BOUNDARY && offset[1] > BOUNDARY_){
+            printf("%d ns\n", offset[1]);
             break;
         }
 
         clock_gettime(CLOCK_REALTIME, &C);
 
-        if((tmp = C.tv_nsec + offset) > 1000000000){
+        if((tmp = C.tv_nsec + offset[1]) > 1000000000){
             C.tv_sec += 1;
             C.tv_nsec = tmp - 1000000000;
         }

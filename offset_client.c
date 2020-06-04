@@ -10,7 +10,7 @@
 #include <sys/types.h>
 
 #include <pthread.h>
-#include <unistd.h>  // int32_t
+#include <unistd.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
@@ -21,13 +21,13 @@ int main(int argc, char *argv[]){
 
     int sock, tmp;
 
-    int64_t offset = 0;
+    int32_t offset[2] = {0};
 
     struct sockaddr_in server_addr;
 
     struct timespec T1, T2, T3, T4, C; // C (current)
 
-    int64_t T[4], binary = 0x00;
+    int32_t T[4], binary = 0x00;
 
     memset((int32_t *)&T, '\0', sizeof(T));
 
@@ -63,12 +63,10 @@ int main(int argc, char *argv[]){
 
     T2.tv_sec = T[0]; T2.tv_nsec = T[1]; T3.tv_sec = T[2]; T3.tv_nsec = T[3];
 
-    offset += (((T2.tv_sec - T1.tv_sec) * 1000000000 + T2.tv_nsec - T1.tv_nsec) -
-                ((T4.tv_sec - T3.tv_sec) * 1000000000 + T4.tv_nsec - T3.tv_nsec));
+    offset[0] += ((T2.tv_sec - T1.tv_sec) - (T4.tv_sec - T3.tv_sec)) / 2;
+    offset[1] += ((T2.tv_nsec - T1.tv_nsec) - (T4.tv_nsec - T3.tv_nsec)) / 2;
 
-    offset /= 2;
-
-    printf("offset : %dns\n", (int)offset);
+    printf("offset : %d.%d ns\n", offset[0], offset[1]);
 
     close(sock);
 
