@@ -103,7 +103,13 @@ int main(int argc, char *argv[]){
                 }
                 //else break; 수신 그대로 중단되버리는 경우가 있음
 
+<<<<<<< Updated upstream
             }
+=======
+            //if(abs(temp1) < 1 && abs(temp2) <= DEVIATION){
+                offset[0] += temp1; offset[1] += temp2; iteration++;
+            //}
+>>>>>>> Stashed changes
 
             offset += (((T2.tv_sec - T1.tv_sec) * 1000000 + T2.tv_usec - T1.tv_usec) -
                       ((T4.tv_sec - T3.tv_sec) * 1000000 + T4.tv_usec - T3.tv_usec));

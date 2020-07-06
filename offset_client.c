@@ -55,6 +55,7 @@ int main(int argc, char *argv[]){
         exit(1);
     }
 
+<<<<<<< Updated upstream
     client_addr.sin_family = AF_INET;
     client_addr.sin_addr.s_addr = htonl(INADDR_ANY);
     client_addr.sin_port = htons(0);
@@ -87,18 +88,48 @@ int main(int argc, char *argv[]){
                 break;
             }
         }
+=======
+    //while(1){
+
+        clock_gettime(CLOCK_REALTIME, &T1);
+
+        if(send(sock, &binary, sizeof(binary), 0) == -1){
+            printf("send() failed\n");
+            exit(1);
+        }
+
+        if(recv(sock, T, sizeof(T), 0) == -1){ // code running stop until recv
+            printf("recv() failed\n");
+            exit(1);
+        }
+
+        clock_gettime(CLOCK_REALTIME, &T4);
+
+        T2.tv_sec = T[0]; T2.tv_nsec = T[1]; T3.tv_sec = T[2]; T3.tv_nsec = T[3];
+
+        offset[0] = ((T2.tv_sec - T1.tv_sec) - (T4.tv_sec - T3.tv_sec)) / 2;
+
+        offset[1] = ((T2.tv_nsec - T1.tv_nsec) - (T4.tv_nsec - T3.tv_nsec)) / 2;
+>>>>>>> Stashed changes
 
         printf("%f\n", (double)(clock() - start)/1000000);
 
+<<<<<<< Updated upstream
         if((double)(clock() - start)/1000000 > 0.5) exit(1); // 0.5초 넘어가면 기다림을 종료 while문 안에서 무한루프를 도는 것을 방지
     }
 
     //offset 계산
     offset += (((T2.tv_sec - T1.tv_sec) * 1000000 + T2.tv_usec - T1.tv_usec) -
                ((T4.tv_sec - T3.tv_sec) * 1000000 + T4.tv_usec - T3.tv_usec)) / 2;
+=======
+        printf("T1: %d.%d\nT4: %d.%d\noffset : %d.%d\n", T1.tv_sec, T1.tv_nsec, T4.tv_sec, T4.tv_nsec, offset[0], offset[1]);
+
+    //}
+>>>>>>> Stashed changes
 
     //printf("%d ", offset);
 
+<<<<<<< Updated upstream
     usleep(SLEEP_TIME);
 
     printf("%dus", abs(offset));
@@ -107,3 +138,6 @@ int main(int argc, char *argv[]){
 
     close(sock);
 }
+=======
+}
+>>>>>>> Stashed changes
