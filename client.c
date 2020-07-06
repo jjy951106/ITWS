@@ -4,6 +4,7 @@
 #include <stdlib.h> // exit(0) 'normal' exit(1) 'error'
 #include <string.h>
 #include <stdint.h> // int32_t int64_t
+#include <stdlib.h>
 
 #include <sys/time.h>
 #include <sys/socket.h>
@@ -17,15 +18,17 @@
 #define SERVER "192.168.0.158"
 #define PORT 5005
 
-#define ITERATION 5
-#define SPLEEP_TIME 0 // nanosecond
+#define ITERATION 10
+#define SPLEEP_TIME 0 // nanosecond inter iteration term
+
+#define DEVIATION 3000000 // nanosecond
 
 #define BOUNDARY 200000 // plus
 #define BOUNDARY_ -200000 // minus
 
 int main(int argc, char *argv[]){
 
-    int sock, iter;
+    int sock, iter, temp1, temp2, iteration;
 
     struct sockaddr_in server_addr;
 
@@ -63,6 +66,7 @@ int main(int argc, char *argv[]){
 
         offset[0] = 0;
         offset[1] = 0;
+        iteration = 0;
 
         for(iter = 0; iter < ITERATION; iter++){
 
@@ -82,15 +86,21 @@ int main(int argc, char *argv[]){
 
             T2.tv_sec = T[0]; T2.tv_nsec = T[1]; T3.tv_sec = T[2]; T3.tv_nsec = T[3];
 
-            offset[0] += ((T2.tv_sec - T1.tv_sec) - (T4.tv_sec - T3.tv_sec));
+            temp1 = ((T2.tv_sec - T1.tv_sec) - (T4.tv_sec - T3.tv_sec));
 
-            offset[1] += ((T2.tv_nsec - T1.tv_nsec) - (T4.tv_nsec - T3.tv_nsec));
+            temp2 = ((T2.tv_nsec - T1.tv_nsec) - (T4.tv_nsec - T3.tv_nsec));
+
+            if(abs(temp1) < 1 && abs(temp2) <= DEVIATION){
+                offset[0] += temp1; offset[1] += temp2; iteration++;
+            }
 
             nanosleep(&s, NULL);
         }
-
-        offset[0] /= (2 * ITERATION);
-        offset[1] /= (2 * ITERATION);
+        
+        if(iteration != 0){
+            offset[0] /= (2 * iteration);
+            offset[1] /= (2 * iteration);
+        }
 
         printf("offset : %d.%d\n", offset[0], offset[1]);
 

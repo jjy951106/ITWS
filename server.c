@@ -16,7 +16,7 @@
 
 #define BACKLOG 5 // total client number
 #define MEDIUM_TERM_SEC 0
-#define MEDIUM_TERM_NSEC 0 // nanosecond
+#define MEDIUM_TERM_NSEC 5000000 // nanosecond between receive and transmit
 
 #define PORT 5005
 
