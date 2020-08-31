@@ -66,7 +66,6 @@ void offset_calculated(int sock, int *offset){
 
     /* printpacket */
     struct cmsghdr *cm;
-    struct sockaddr_in *p_from_addr = (struct sockaddr_in *)msg.msg_name;
     struct timespec *ts = (struct timespec *)msg.msg_iov->iov_base;
 
     struct timespec T[4], s;
