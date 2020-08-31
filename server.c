@@ -82,8 +82,6 @@ void *Server_Socket_Thread(void *arg){
 
     Thread_t--;
 
-    if(Thread_t == 0) Thread_t++;
-
     close(sock);
 }
 

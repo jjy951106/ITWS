@@ -57,32 +57,30 @@ void offset_calculated(int sock, int *offset){
 
     struct timespec T[4];
 
-    for(int iter = 0; iter < ITERATION; iter++){
+    clock_gettime(CLOCK_REALTIME, &T[0]);
 
-        clock_gettime(CLOCK_REALTIME, &T[0]);
+    /* send */
 
-        /* send */
+    if(send(sock, binary, sizeof(binary), 0) < 0)
+        err("send()");
 
-        if(send(sock, binary, sizeof(binary), 0) < 0)
-            err("send()");
+    /* recvmsg */
 
-        /* recvmsg */
+    if(recvmsg(sock, &msg, 0) < 0)
+        err("recv()");
 
-        if(recvmsg(sock, &msg, 0) < 0)
-            err("recv()");
+    else{
+        memcpy(&T[1], &ts[0], sizeof(struct timespec));
+        memcpy(&T[2], &ts[1], sizeof(struct timespec));
 
-        else{
-            memcpy(&T[1], &ts[0], sizeof(struct timespec));
-            memcpy(&T[2], &ts[1], sizeof(struct timespec));
+        for (cm = CMSG_FIRSTHDR(&msg); cm; cm = CMSG_NXTHDR(&msg, cm))
+            if (SOL_SOCKET == cm->cmsg_level && SO_TIMESTAMPNS == cm->cmsg_type)
+                memcpy(&T[3], (struct timespec *)CMSG_DATA(cm), sizeof(struct timespec));
+    }
 
-            for (cm = CMSG_FIRSTHDR(&msg); cm; cm = CMSG_NXTHDR(&msg, cm))
-                if (SOL_SOCKET == cm->cmsg_level && SO_TIMESTAMPNS == cm->cmsg_type)
-                    memcpy(&T[3], (struct timespec *)CMSG_DATA(cm), sizeof(struct timespec));
-        }
+    offset[0] = ((T[1].tv_sec - T[0].tv_sec) - (T[3].tv_sec - T[2].tv_sec));
 
-        offset[0] = ((T[1].tv_sec - T[0].tv_sec) - (T[3].tv_sec - T[2].tv_sec));
-
-        offset[1] = ((T[1].tv_nsec - T[0].tv_nsec) - (T[3].tv_nsec - T[2].tv_nsec));
+    offset[1] = ((T[1].tv_nsec - T[0].tv_nsec) - (T[3].tv_nsec - T[2].tv_nsec));
 
 }
 
