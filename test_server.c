@@ -14,7 +14,6 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <net/if.h>
-#include <netinet/in.h>
 
 
 // Header about Timestamp
@@ -61,6 +60,9 @@ int main(int argc, char *argv[]){
     struct sockaddr_in *p_from_addr = (struct sockaddr_in *)msg.msg_name;
     struct timespec *ts;
     struct timespec *T = (struct timespec *)msg.msg_iov->iov_base;
+    struct timespec TT[4];
+
+    memset(TT, '\0', sizeof(TT));
 
     int res, client_len;
     int sock, new;
@@ -105,7 +107,10 @@ int main(int argc, char *argv[]){
                     printf("from %s\n", inet_ntoa(p_from_addr->sin_addr));
                     //memcpy(ts, CMSG_DATA(cm), sizeof(struct timespec));
                     ts = (struct timespec *)CMSG_DATA(cm);
-                    printf("SW TIMESTAMP %ld.%09ld\n", (long)ts->tv_sec, (long)ts->tv_nsec);
+                    memcpy(&TT[0], (struct timespec *)CMSG_DATA(cm), sizeof(struct timespec));
+                    memcpy(&TT[1], (struct timespec *)CMSG_DATA(cm), sizeof(struct timespec));
+                    memcpy(&TT[3], (struct timespec *)CMSG_DATA(cm), sizeof(struct timespec));
+                    printf("SW TIMESTAMP %ld.%09ld\n", (long)TT[1].tv_sec, (long)TT[1].tv_nsec);
                 }
             }
     }
