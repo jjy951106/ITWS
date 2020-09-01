@@ -30,7 +30,7 @@
 #define BOUNDARY 3000000 // plus(ns)
 #define BOUNDARY_ -3000000 // minus(ns)
 
-int32_t DEVIATION 10000000; // ns
+int32_t DEVIATION = 10000000; // ns
 
 struct timespec T_;
 
@@ -122,6 +122,7 @@ void iterative_offset_calculated(int sock, int *offset){
             err("recv()");
 
         else{
+            clock_gettime(CLOCK_REALTIME, &T[1]); // if no action SO_TIMESTAMPNS
             memcpy(&T_, &ts[1], sizeof(struct timespec));
             for (cm = CMSG_FIRSTHDR(&msg); cm; cm = CMSG_NXTHDR(&msg, cm))
                 if (SOL_SOCKET == cm->cmsg_level && SO_TIMESTAMPNS == cm->cmsg_type)
@@ -143,14 +144,19 @@ void iterative_offset_calculated(int sock, int *offset){
         nanosleep(&s, NULL);
     }
 
-    if(iteration != 0){
+    printf("iteration : %d \n", iteration);
+
+    if(iteration >= 5){ // the minimum number of iterations that within the deviation is more than 5 in total 10
         offset[0] /= (2 * iteration);
         offset[1] /= (2 * iteration);
     }
 
     /* DEVIATION INCREASING */
-    else
+    else{
         DEVIATION += 10000000;
+        offset[0] = 0;
+        offset[1] = 0;
+    }
 }
 
 void offset_calculated(int sock, int *offset){
@@ -193,17 +199,18 @@ void offset_calculated(int sock, int *offset){
         err("recv()");
 
     else{
-        memcpy(&T[1], &ts[0], sizeof(struct timespec));
-        memcpy(&T[2], &ts[1], sizeof(struct timespec));
-
+        clock_gettime(CLOCK_REALTIME, &T[1]); // if no action SO_TIMESTAMPNS
         for (cm = CMSG_FIRSTHDR(&msg); cm; cm = CMSG_NXTHDR(&msg, cm))
-            if (SOL_SOCKET == cm->cmsg_level && SO_TIMESTAMPNS == cm->cmsg_type)
+            if (SOL_SOCKET == cm->cmsg_level && SO_TIMESTAMPNS == cm->cmsg_type){
+                printf("action SO_TIMESTAMPNS\n");
                 memcpy(&T[3], (struct timespec *)CMSG_DATA(cm), sizeof(struct timespec));
+            }
     }
 
-    offset[0] = ((T[1].tv_sec - T[0].tv_sec) - (T[3].tv_sec - T[2].tv_sec));
+    /* T1 : T[0], T2 : ts[0], T3 : ts[1], T4 : T[1] */
+    offset[0] = ((ts[0].tv_sec - T[0].tv_sec) - (T[1].tv_sec - ts[1].tv_sec));
 
-    offset[1] = ((T[1].tv_nsec - T[0].tv_nsec) - (T[3].tv_nsec - T[2].tv_nsec));
+    offset[1] = ((ts[0].tv_nsec - T[0].tv_nsec) - (T[1].tv_nsec - ts[1].tv_nsec));
 
 }
 
@@ -221,7 +228,10 @@ void mode_1(int sock){
 
         printf("offset : %d.%d\n", offset[0], offset[1]);
 
-        if(abs(offset[0]) > 0){
+        if(offset[0] == 0 && offset[1] == 0) // Not enough samples
+            continue;
+
+        else if(abs(offset[0]) > 0){
             clock_settime(CLOCK_REALTIME, &T_);
             sleep(1);
             continue;
@@ -236,7 +246,7 @@ void mode_1(int sock){
 
         clock_gettime(CLOCK_REALTIME, &C);
 
-        if((tmp = C.tv_nsec + offset[1]) > 1000000000){
+        if((tmp = C.tv_nsec + offset[1]) >= 1000000000){
             C.tv_sec += 1;
             C.tv_nsec = tmp - 1000000000;
         }
@@ -279,7 +289,10 @@ void mode_2(int sock){
 
             printf("offset : %d.%d\n", offset[0], offset[1]);
 
-            if(abs(offset[0]) > 0){
+            if(offset[0] == 0 && offset[1] == 0) // Not enough samples
+                continue;
+
+            else if(abs(offset[0]) > 0){
                 clock_settime(CLOCK_REALTIME, &T_);
                 sleep(1);
                 continue;

@@ -66,9 +66,13 @@ void *Server_Socket_Thread(void *arg){
 
         if(close_ == 0) break; // close client socket recv return 0
 
+        clock_gettime(CLOCK_REALTIME, &T[0]);
+
         for (cm = CMSG_FIRSTHDR(&msg); cm; cm = CMSG_NXTHDR(&msg, cm))
-                if (SOL_SOCKET == cm->cmsg_level && SO_TIMESTAMPNS == cm->cmsg_type)
+                if (SOL_SOCKET == cm->cmsg_level && SO_TIMESTAMPNS == cm->cmsg_type){
+                    printf("action SO_TIMESTAMPNS\n");
                     memcpy(&T[0], (struct timespec *)CMSG_DATA(cm), sizeof(struct timespec));
+                }
 
         nanosleep(&s, NULL);
 
