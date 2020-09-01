@@ -59,9 +59,12 @@ void *Server_Socket_Thread(void *arg){
 
     struct timespec T[2];
 
+    int32_t T_int[4]; // for compatiblility between 32bit and 64bit 
+
     struct timespec s; // time_t (long) sec long nsec
 
     s.tv_sec = MEDIUM_TERM_SEC; s.tv_nsec = MEDIUM_TERM_NSEC;
+
     while((close_ = recvmsg(sock, &msg, 0)) != -1){
 
         if(close_ == 0) break; // close client socket recv return 0
@@ -74,11 +77,15 @@ void *Server_Socket_Thread(void *arg){
                     memcpy(&T[0], (struct timespec *)CMSG_DATA(cm), sizeof(struct timespec));
                 }
 
+        T_int[0] = T[0].tv_sec; T_int[1] = T[0].tv_nsec;
+
         nanosleep(&s, NULL);
 
         clock_gettime(CLOCK_REALTIME, &T[1]);
 
-        send(sock, T, sizeof(T), 0);
+        T_int[2] = T[1].tv_sec; T_int[3] = T[1].tv_nsec;
+
+        send(sock, T_int, sizeof(T_int), 0);
 
         printf("%d\nT2: %ld.%ld\nT3: %ld.%ld\n\n", ++n, T[0].tv_sec, T[0].tv_nsec, T[1].tv_sec, T[1].tv_nsec); // time_t (long) : %ld long: %ld
 

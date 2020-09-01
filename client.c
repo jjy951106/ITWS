@@ -99,9 +99,10 @@ void iterative_offset_calculated(int sock, int *offset){
 
     /* printpacket */
     struct cmsghdr *cm;
-    struct timespec *ts = (struct timespec *)msg.msg_iov->iov_base;
 
-    struct timespec T[2], s;
+    int32_t *T_int = (int32_t *)msg.msg_iov->iov_base;
+
+    struct timespec T[4], s;
 
     int temp1, temp2, iteration = 0;
 
@@ -122,17 +123,23 @@ void iterative_offset_calculated(int sock, int *offset){
             err("recv()");
 
         else{
-            clock_gettime(CLOCK_REALTIME, &T[1]); // if no action SO_TIMESTAMPNS
-            memcpy(&T_, &ts[1], sizeof(struct timespec));
+            T[1].tv_sec = T_int[0]; T[1].tv_nsec = T_int[1];
+            T[2].tv_sec = T_int[2]; T[2].tv_nsec = T_int[3];
+            clock_gettime(CLOCK_REALTIME, &T[3]); // if no action SO_TIMESTAMPNS
+            memcpy(&T_, &T[2], sizeof(struct timespec));
             for (cm = CMSG_FIRSTHDR(&msg); cm; cm = CMSG_NXTHDR(&msg, cm))
                 if (SOL_SOCKET == cm->cmsg_level && SO_TIMESTAMPNS == cm->cmsg_type)
-                    memcpy(&T[1], (struct timespec *)CMSG_DATA(cm), sizeof(struct timespec));
+                    memcpy(&T[3], (struct timespec *)CMSG_DATA(cm), sizeof(struct timespec));
         }
 
-        /* T1 : T[0], T2 : ts[0], T3 : ts[1], T4 : T[1] */
-        temp1 = ((ts[0].tv_sec - T[0].tv_sec) - (T[1].tv_sec - ts[1].tv_sec));
+        /* T1 : T[0], T2 : T[1], T3 : T[2], T4 : T[3] */
+        temp1 = ((T[1].tv_sec - T[0].tv_sec) - (T[3].tv_sec - T[2].tv_sec));
 
-        temp2 = ((ts[0].tv_nsec - T[0].tv_nsec) - (T[1].tv_nsec - ts[1].tv_nsec));
+        temp2 = ((T[1].tv_nsec - T[0].tv_nsec) - (T[3].tv_nsec - T[2].tv_nsec));
+
+        /*printf("T1 : %ld.%ld\nT2 : %ld.%ld\nT3 : %ld.%ld\nT4 : %ld.%ld\n",
+        	T[0].tv_sec, T[0].tv_nsec, T[1].tv_sec, T[1].tv_nsec,
+        	T[2].tv_sec, T[2].tv_nsec, T[3].tv_sec, T[3].tv_nsec);*/
 
         /* DEVIATION */
         if(abs(temp1) < 1 && abs(temp2) <= DEVIATION){
@@ -182,7 +189,8 @@ void offset_calculated(int sock, int *offset){
 
     /* printpacket */
     struct cmsghdr *cm;
-    struct timespec *ts = (struct timespec *)msg.msg_iov->iov_base;
+
+    int32_t *T_int = (int32_t *)msg.msg_iov->iov_base;
 
     struct timespec T[4];
 
@@ -199,7 +207,9 @@ void offset_calculated(int sock, int *offset){
         err("recv()");
 
     else{
-        clock_gettime(CLOCK_REALTIME, &T[1]); // if no action SO_TIMESTAMPNS
+        T[1].tv_sec = T_int[0]; T[1].tv_nsec = T_int[1];
+        T[2].tv_sec = T_int[2]; T[2].tv_nsec = T_int[3];
+        clock_gettime(CLOCK_REALTIME, &T[3]); // if no action SO_TIMESTAMPNS
         for (cm = CMSG_FIRSTHDR(&msg); cm; cm = CMSG_NXTHDR(&msg, cm))
             if (SOL_SOCKET == cm->cmsg_level && SO_TIMESTAMPNS == cm->cmsg_type){
                 printf("action SO_TIMESTAMPNS\n");
@@ -207,10 +217,10 @@ void offset_calculated(int sock, int *offset){
             }
     }
 
-    /* T1 : T[0], T2 : ts[0], T3 : ts[1], T4 : T[1] */
-    offset[0] = ((ts[0].tv_sec - T[0].tv_sec) - (T[1].tv_sec - ts[1].tv_sec));
+    /* T1 : T[0], T2 : T_int[0], T_int[1], T3 : T_int[2], T_int[3], T4 : T[1] */
+    offset[0] = ((T[1].tv_sec - T[0].tv_sec) - (T[3].tv_sec - T[2].tv_sec));
 
-    offset[1] = ((ts[0].tv_nsec - T[0].tv_nsec) - (T[1].tv_nsec - ts[1].tv_nsec));
+    offset[1] = ((T[1].tv_nsec - T[0].tv_nsec) - (T[3].tv_nsec - T[2].tv_nsec));
 
 }
 
