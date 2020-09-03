@@ -78,9 +78,9 @@ void offset_calculated(int sock, int *offset){
                 memcpy(&T[3], (struct timespec *)CMSG_DATA(cm), sizeof(struct timespec));
     }
 
-    offset[0] = ((T[1].tv_sec - T[0].tv_sec) - (T[3].tv_sec - T[2].tv_sec));
+    offset[0] = ((T[1].tv_sec - T[0].tv_sec) - (T[3].tv_sec - T[2].tv_sec)) / 2;
 
-    offset[1] = ((T[1].tv_nsec - T[0].tv_nsec) - (T[3].tv_nsec - T[2].tv_nsec));
+    offset[1] = ((T[1].tv_nsec - T[0].tv_nsec) - (T[3].tv_nsec - T[2].tv_nsec)) / 2;
 
 }
 

@@ -27,8 +27,8 @@
 
 /* requirement : 5ms */
 
-#define BOUNDARY 3000000 // plus(ns)
-#define BOUNDARY_ -3000000 // minus(ns)
+#define BOUNDARY 1000000 // plus(ns)
+#define BOUNDARY_ -1000000 // minus(ns)
 
 int32_t DEVIATION = 10000000; // ns
 
@@ -64,15 +64,21 @@ void initialized_T(int sock){
     msg.msg_control = &control;
     msg.msg_controllen = sizeof(control);
 
-    struct timespec *ts = (struct timespec *)msg.msg_iov->iov_base;
+    int32_t *T_int = (int32_t *)msg.msg_iov->iov_base;
+    
+    struct timespec T;
 
     if(send(sock, binary, sizeof(binary), 0) < 0)
         err("send()");
 
     if(recvmsg(sock, &msg, 0) < 0)
         err("recv()");
+    
+    T.tv_sec = T_int[2]; T.tv_nsec = T_int[3];
+        
+    //printf("%ld.%ld\n", T.tv_sec, T.tv_nsec);
 
-    clock_settime(CLOCK_REALTIME, &ts[1]);
+    clock_settime(CLOCK_REALTIME, &T);
 
 }
 
@@ -104,11 +110,11 @@ void iterative_offset_calculated(int sock, int *offset){
 
     struct timespec T[4], s;
 
-    int temp1, temp2, iteration = 0;
+    int temp1, temp2, iter, iteration = 0;
 
     s.tv_sec = MEDIUM_TERM_SEC; s.tv_nsec = MEDIUM_TERM_NSEC;
 
-    for(int iter = 0; iter < ITERATION; iter++){
+    for(iter = 0; iter < ITERATION; iter++){
 
         clock_gettime(CLOCK_REALTIME, &T[0]);
 
@@ -153,7 +159,7 @@ void iterative_offset_calculated(int sock, int *offset){
 
     printf("iteration : %d \n", iteration);
 
-    if(iteration >= 5){ // the minimum number of iterations that within the deviation is more than 5 in total 10
+    if(iteration >= 3){ // the minimum number of iterations that within the deviation is more than 5 in total 10
         offset[0] /= (2 * iteration);
         offset[1] /= (2 * iteration);
     }
@@ -164,6 +170,9 @@ void iterative_offset_calculated(int sock, int *offset){
         offset[0] = 0;
         offset[1] = 0;
     }
+
+    if(iteration >= 7 && iteration <= ITERATION) // increase accuracy
+        DEVIATION -= 5000000;
 }
 
 void offset_calculated(int sock, int *offset){
@@ -218,9 +227,9 @@ void offset_calculated(int sock, int *offset){
     }
 
     /* T1 : T[0], T2 : T_int[0], T_int[1], T3 : T_int[2], T_int[3], T4 : T[1] */
-    offset[0] = ((T[1].tv_sec - T[0].tv_sec) - (T[3].tv_sec - T[2].tv_sec));
+    offset[0] = ((T[1].tv_sec - T[0].tv_sec) - (T[3].tv_sec - T[2].tv_sec)) / 2;
 
-    offset[1] = ((T[1].tv_nsec - T[0].tv_nsec) - (T[3].tv_nsec - T[2].tv_nsec));
+    offset[1] = ((T[1].tv_nsec - T[0].tv_nsec) - (T[3].tv_nsec - T[2].tv_nsec)) / 2;
 
 }
 
