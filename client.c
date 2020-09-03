@@ -18,6 +18,8 @@
 #include <errno.h>
 #include "linux/errqueue.h"
 
+#include <netdb.h> // domain address
+
 #define SERVER "192.168.0.160" // test server
 #define PORT 5005              // default port
 
@@ -360,6 +362,9 @@ int main(int argc, char *argv[]){
 
     struct sockaddr_in server_addr;
 
+    char *IPbuffer;
+    struct hostent *host_entry;
+
     /* TCP */
 
     if((sock = socket(AF_INET, SOCK_STREAM, 0)) < 0)
@@ -378,7 +383,16 @@ int main(int argc, char *argv[]){
     server_addr.sin_addr.s_addr = inet_addr(SERVER /* 192.168.0.160 */);
     server_addr.sin_port = htons(PORT /* 5005 */);
 
-    if(argc >= 2) server_addr.sin_addr.s_addr = inet_addr(argv[1]);
+    if(argc >= 2){
+        // To retrieve host information
+        host_entry = gethostbyname(argv[1]);
+
+        // To convert an Internet network
+        // address into ASCII string
+        IPbuffer = inet_ntoa(*((struct in_addr*)host_entry->h_addr_list[0]));
+
+        server_addr.sin_addr.s_addr = inet_addr(IPbuffer);
+    }
 
     if(argc == 3) server_addr.sin_port = htons(atoi(argv[2]));
 
