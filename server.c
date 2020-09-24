@@ -24,13 +24,6 @@
 
 #define PORT 5005 // default port
 
-/*typedef struct p_thread_in_use{
-    pthread_t p_thread;
-    int in_use;
-}p_thread_in_use;
-
-p_thread_in_use p_thread_add[BACKLOG];*/
-
 int Thread_t = 0; // total thread number played
 
 static void err(const char *error){
@@ -66,11 +59,9 @@ void *Server_Socket_Thread(void *arg){
 
     int sock = (int *)arg;
 
-    //int sock, *pth = (int *)arg;
-
     struct timespec T[2];
 
-    int32_t T_int[4]; // for compatiblility between 32bit and 64bit 
+    int32_t T_int[4]; // for compatiblility between 32bit and 64bit
 
     struct timespec s; // time_t (long) sec long nsec
 
@@ -106,8 +97,6 @@ void *Server_Socket_Thread(void *arg){
 
     Thread_t--; // Thread crash caution
 
-    //p_thread_add[pth[1]].in_use = 0;
-
     close(sock);
 }
 
@@ -118,8 +107,6 @@ int main(int argc, char *argv[]){
     struct sockaddr_in server_addr, client_addr;
 
     pthread_t p_thread[BACKLOG]; // thread identifier
-
-    //memset(p_thread_add, 0, sizeof(p_thread_add));
 
     /* TCP */
 
@@ -154,15 +141,6 @@ int main(int argc, char *argv[]){
         if(pthread_create(&p_thread[0], NULL, Server_Socket_Thread, (void *)new) == 0) Thread_t++; // thread success return 0 pthread overlap is ok but index -1 is not ok
         printf("%d : Client IP : %s Port : %d\n", Thread_t, inet_ntoa(client_addr.sin_addr), ntohs(client_addr.sin_port));
     }
-
-    /*while((new = accept(sock, (struct sockaddr*)&client_addr, &client_len)) != -1){
-        if(Thread_t < 0) Thread_t = 0; // additional consideration is demanded
-        if(p_thread_add[Thread_t].in_use == 0) p_thread_add[Thread_t].in_use = 1;
-        else pthread_join(&p_thread_add[Thread_t].p_thread, NULL); // Waiting until end
-        pth[0] = new; pth[1] = Thread_t;
-        if(pthread_create(&p_thread_add[Thread_t].p_thread, NULL, Server_Socket_Thread, (void *)pth) == 0) Thread_t++; // thread success return 0
-        printf("%d : Client IP : %s Port : %d\n", Thread_t, inet_ntoa(client_addr.sin_addr), ntohs(client_addr.sin_port));
-    }*/
 
     close(sock);
 

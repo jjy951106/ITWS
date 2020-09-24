@@ -45,6 +45,8 @@ static void err(const char *error){
     exit(1);
 }
 
+/* TCP */
+
 void initialized_T(int sock){
 
     /* recvpacket */
@@ -67,7 +69,7 @@ void initialized_T(int sock){
     msg.msg_controllen = sizeof(control);
 
     int32_t *T_int = (int32_t *)msg.msg_iov->iov_base;
-    
+
     struct timespec T;
 
     if(send(sock, binary, sizeof(binary), 0) < 0)
@@ -75,9 +77,9 @@ void initialized_T(int sock){
 
     if(recvmsg(sock, &msg, 0) < 0)
         err("recv()");
-    
+
     T.tv_sec = T_int[2]; T.tv_nsec = T_int[3];
-        
+
     //printf("%ld.%ld\n", T.tv_sec, T.tv_nsec);
 
     clock_settime(CLOCK_REALTIME, &T);
@@ -259,7 +261,7 @@ void mode_1(int sock){
         }
 
         else if(offset[1] < BOUNDARY && offset[1] > BOUNDARY_){
-            printf("%d ns\n", offset[1]);
+            printf("\nsuccess : %d ns\n\n", offset[1]);
             break;
         }
 
@@ -356,26 +358,145 @@ void mode_3(int sock){
 
 }
 
-int main(int argc, char *argv[]){
+int TCP_socket(struct sockaddr_in *server_addr, int mode){
 
-    int sock, temp1, temp2, enabled = 1, mode = 1;
-
-    struct sockaddr_in server_addr;
-
-    char *IPbuffer;
-    struct hostent *host_entry;
+    int sock, enabled = 1;
 
     /* TCP */
 
     if((sock = socket(AF_INET, SOCK_STREAM, 0)) < 0)
-        err("socket()");
+        err("TCP socket()");
 
     /* SO_TIMESTAMPNS */
 
     if(setsockopt(sock, SOL_SOCKET, SO_TIMESTAMPNS, &enabled, sizeof(enabled)) < 0)
         err("setsockopt()");
 
+    if(connect(sock, (struct sockaddr*)server_addr, sizeof(*server_addr)) < 0)
+        err("connect()");
+
+    if(mode == 1)
+        mode_1(sock);
+
+    else if(mode == 2)
+        mode_2(sock);
+
+    else if(mode == 3)
+        mode_3(sock);
+
+    else
+    {
+        printf("mode 1 : sync\nmode 2 : sync continuous\nmode 3 : offset print\n");
+    }
+
+    close(sock);
+
+    return 0;
+
+}
+
+/* TCP */
+
+void UDP_initialized_T(int sock, struct sockaddr_in *server_addr){
+
+    /* recvpacket */
+    char data[256];
+    struct msghdr msg;
+    struct iovec entry;
+    struct sockaddr_in from_addr;
+    struct {
+        struct cmsghdr cm;
+        char control[512];
+    } control;
+    memset(&msg, 0, sizeof(msg));
+    msg.msg_iov = &entry;
+    msg.msg_iovlen = 1;
+    entry.iov_base = data;
+    entry.iov_len = sizeof(data);
+    msg.msg_name = (caddr_t)&from_addr;
+    msg.msg_namelen = sizeof(from_addr);
+    msg.msg_control = &control;
+    msg.msg_controllen = sizeof(control);
+
+    int32_t *T_int = (int32_t *)msg.msg_iov->iov_base;
+
+    struct timespec T;
+
+    if(sendto(sock, binary, sizeof(binary), 0, (struct sockaddr*)server_addr, sizeof(*server_addr)) < 0)
+        err("send()");
+
+    if(recvmsg(sock, &msg, 0) < 0)
+        err("recv()");
+
+    T.tv_sec = T_int[2]; T.tv_nsec = T_int[3];
+
+    //printf("%ld.%ld\n", T.tv_sec, T.tv_nsec);
+
+    clock_settime(CLOCK_REALTIME, &T);
+
+}
+
+/* UDP */
+
+int UDP_socket(struct sockaddr_in *server_addr, int mode){
+
+    int sock, enabled = 1;
+
+    struct sockaddr_in client_addr;
+
+    int client_len = sizeof(client_addr);
+
+    client_addr.sin_family = AF_INET;
+    client_addr.sin_addr.s_addr = htonl(INADDR_ANY);
+    client_addr.sin_port = htons(0);
+
+    /* UDP */
+
+    if((sock = socket(AF_INET, SOCK_DGRAM, 0)) < 0)
+        err("UDP socket()");
+
+    /* SO_TIMESTAMPNS */
+
+    if(setsockopt(sock, SOL_SOCKET, SO_TIMESTAMPNS, &enabled, sizeof(enabled)) < 0)
+        err("setsockopt()");
+
+    if(bind(sock, (struct sockaddr*)&client_addr, client_len) < 0)
+        err("bind()");
+
+    if(mode == 1)
+        UDP_mode_1(sock, &server_addr);
+
+    else if(mode == 2)
+        UDP_mode_2(sock, &server_addr);
+
+    else if(mode == 3)
+        UDP_mode_3(sock, &server_addr);
+
+    else
+    {
+        printf("mode 1 : sync\nmode 2 : sync continuous\nmode 3 : offset print\n");
+    }
+
+    close(sock);
+
+    return 0;
+
+}
+
+/* UDP */
+
+int main(int argc, char *argv[]){
+
+    int protocol = 0, mode = 1;
+
+    struct sockaddr_in server_addr;
+
+    char *IPbuffer;
+    struct hostent *host_entry;
+
     /* filename server_ip port mode(default 1) */
+
+    printf("TCP : 0 (default), UDP : 1\n\nIP address, port, protocol, mode\n\n");
 
     memset(&server_addr, '\0', sizeof(server_addr));
 
@@ -394,27 +515,27 @@ int main(int argc, char *argv[]){
         server_addr.sin_addr.s_addr = inet_addr(IPbuffer);
     }
 
-    if(argc == 3) server_addr.sin_port = htons(atoi(argv[2]));
+    if(argc >= 3) server_addr.sin_port = htons(atoi(argv[2]));
 
-    if(argc == 4) mode = atoi(argv[3]);
+    if(argc >= 4 && atoi(argv[3]) == 1) protocol = 1;
 
-    if(connect(sock, (struct sockaddr*)&server_addr, sizeof(server_addr)) < 0)
-        err("connect()");
+    if(argc == 5) mode = atoi(argv[4]);
 
-    if(mode == 1)
-        mode_1(sock);
+    if (argc > 5) {
+		printf("Input exceeded\n");
+		return 0;
+	}
 
-    else if(mode == 2)
-        mode_2(sock);
-
-    else if(mode == 3)
-        mode_3(sock);
-
-    else
-    {
-        printf("mode 1 : sync\nmode 2 : sync continuous\nmode 3 : offset print\n");
+    if (protocol == 0){
+        printf("TCP client\n\n");
+		TCP_socket(&server_addr, mode);
     }
 
-    close(sock);
+	else{
+        printf("UDP client\n\n");
+		UDP_socket(&server_addr, mode);
+    }
+
+    return 0;
 
 }
