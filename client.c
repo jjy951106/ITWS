@@ -45,6 +45,22 @@ static void err(const char *error){
     exit(1);
 }
 
+int select_mode(int sock, int mode, struct sockaddr_in *server_addr, int protocol){
+
+    if(mode == 1)
+        mode_1(sock, server_addr, protocol);
+
+    else if(mode == 2)
+        mode_2(sock, server_addr, protocol);
+
+    else if(mode == 3)
+        mode_3(sock, server_addr, protocol);
+
+    else
+        printf("mode 1 : sync\nmode 2 : sync continuous\nmode 3 : offset print\n");
+
+}
+
 void send_socket(int sock, struct sockaddr_in *server_addr, int protocol){
 
     if(protocol == 0 /* TCP */)
@@ -79,22 +95,6 @@ void recv_socket(int sock, struct msghdr *msg){
 
     if(recvmsg(sock, msg, 0) < 0)
         err("recv()");
-
-}
-
-int select_mode(int sock, int mode, struct sockaddr_in *server_addr, int protocol){
-
-    if(mode == 1)
-        mode_1(sock, server_addr, protocol);
-
-    else if(mode == 2)
-        mode_2(sock, server_addr, protocol);
-
-    else if(mode == 3)
-        mode_3(sock, server_addr, protocol);
-
-    else
-        printf("mode 1 : sync\nmode 2 : sync continuous\nmode 3 : offset print\n");
 
 }
 
@@ -248,30 +248,37 @@ void mode_1(int sock, struct sockaddr_in *server_addr, int protocol){
 
 void mode_2(int sock, struct sockaddr_in *server_addr, int protocol){
 
-    int32_t offset[2] = { 0, }, offset_check = 0;
+    int32_t offset[2], offset_check = 0;
 
     struct timespec C; // C (current)
+
+    int period = 0, offset_interval = 3; // offset measurament interval
 
     initialized_T(sock, server_addr, protocol);
 
     while(1){
 
+        offset[0] = 0;
+        offset[1] = 0;
+
         offset_calculated(sock, offset, server_addr, protocol);
 
-        sleep(1);
+        sleep(offset_interval);
+        period += offset_interval;
 
         if(abs(offset[0]) > 1 || abs(offset[1]) > 5000000){
             printf("offset_check : %d\n", ++offset_check);
         }
-
-        offset[0] = 0;
-        offset[1] = 0;
 
         if(offset_check >= 3){
 
             offset_check = 0;
 
             mode_1(sock, server_addr, protocol);
+
+            printf("period : %ds\n", period);
+
+            period = 0;
 
             sleep(3);
 

@@ -31,26 +31,32 @@ static void err(const char *error){
     exit(1);
 }
 
-void *Server_Socket_Thread(void *arg){
+int recv_socket(int sock, struct msghdr *msg, struct sockaddr_in *from_addr){
 
     /* recvpacket */
     char data[256];
-    struct msghdr msg;
     struct iovec entry;
-    struct sockaddr_in from_addr;
     struct {
         struct cmsghdr cm;
         char control[512];
     } control;
-    memset(&msg, 0, sizeof(msg));
-    msg.msg_iov = &entry;
-    msg.msg_iovlen = 1;
+    memset(msg, 0, sizeof(*msg));
+    msg->msg_iov = &entry;
+    msg->msg_iovlen = 1;
     entry.iov_base = data;
     entry.iov_len = sizeof(data);
-    msg.msg_name = (caddr_t)&from_addr;
-    msg.msg_namelen = sizeof(from_addr);
-    msg.msg_control = &control;
-    msg.msg_controllen = sizeof(control);
+    msg->msg_name = (caddr_t)from_addr;
+    msg->msg_namelen = sizeof(*from_addr);
+    msg->msg_control = &control;
+    msg->msg_controllen = sizeof(control);
+
+    return recvmsg(sock, msg, 0);
+
+}
+
+void *Server_Socket_Thread(void *arg){
+
+    struct msghdr msg;
 
     /* printpacket */
     struct cmsghdr *cm;
@@ -69,17 +75,15 @@ void *Server_Socket_Thread(void *arg){
 
     //sock = pth[0];
 
-    while((close_ = recvmsg(sock, &msg, 0)) != -1){
+    while((close_ = recv_socket(sock, &msg, NULL)) != -1){
 
         if(close_ == 0) break; // close client socket recv return 0
 
         clock_gettime(CLOCK_REALTIME, &T[0]);
 
         for (cm = CMSG_FIRSTHDR(&msg); cm; cm = CMSG_NXTHDR(&msg, cm))
-                if (SOL_SOCKET == cm->cmsg_level && SO_TIMESTAMPNS == cm->cmsg_type){
-                    printf("action SO_TIMESTAMPNS\n");
+                if (SOL_SOCKET == cm->cmsg_level && SO_TIMESTAMPNS == cm->cmsg_type)
                     memcpy(&T[0], (struct timespec *)CMSG_DATA(cm), sizeof(struct timespec));
-                }
 
         T_int[0] = T[0].tv_sec; T_int[1] = T[0].tv_nsec;
 
@@ -133,7 +137,6 @@ int TCP_server(struct sockaddr_in *server_addr){
     printf("listen() success\n");
 
     while((new = accept(sock, (struct sockaddr*)&client_addr, &client_len)) != -1){
-        printf("accept() success\n");
         if(Thread_t < 0) Thread_t = 0; // additional consideration is demanded
         if(pthread_create(&p_thread[0], NULL, Server_Socket_Thread, (void *)new) == 0) Thread_t++; // thread success return 0 pthread overlap is ok but index -1 is not ok
         printf("%d : Client IP : %s Port : %d\n", Thread_t, inet_ntoa(client_addr.sin_addr), ntohs(client_addr.sin_port));
@@ -146,24 +149,8 @@ int TCP_server(struct sockaddr_in *server_addr){
 
 int UDP_server(struct sockaddr_in *server_addr){
 
-    /* recvpacket */
-    char data[256];
     struct msghdr msg;
-    struct iovec entry;
     struct sockaddr_in from_addr;
-    struct {
-        struct cmsghdr cm;
-        char control[512];
-    } control;
-    memset(&msg, 0, sizeof(msg));
-    msg.msg_iov = &entry;
-    msg.msg_iovlen = 1;
-    entry.iov_base = data;
-    entry.iov_len = sizeof(data);
-    msg.msg_name = (caddr_t)&from_addr;
-    msg.msg_namelen = sizeof(from_addr);
-    msg.msg_control = &control;
-    msg.msg_controllen = sizeof(control);
 
     /* printpacket */
     struct cmsghdr *cm;
@@ -193,17 +180,15 @@ int UDP_server(struct sockaddr_in *server_addr){
 
     printf("bind() success\n\n");
 
-    while(recvmsg(sock, &msg, 0) > 0){
+    while(recv_socket(sock, &msg, &from_addr) > 0){
 
         printf("Client IP : %s Port : %d\n", inet_ntoa(from_addr.sin_addr), ntohs(from_addr.sin_port));
 
         clock_gettime(CLOCK_REALTIME, &T[0]);
 
         for (cm = CMSG_FIRSTHDR(&msg); cm; cm = CMSG_NXTHDR(&msg, cm))
-                if (SOL_SOCKET == cm->cmsg_level && SO_TIMESTAMPNS == cm->cmsg_type){
-                    printf("action SO_TIMESTAMPNS\n");
+                if (SOL_SOCKET == cm->cmsg_level && SO_TIMESTAMPNS == cm->cmsg_type)
                     memcpy(&T[0], (struct timespec *)CMSG_DATA(cm), sizeof(struct timespec));
-                }
 
         T_int[0] = T[0].tv_sec; T_int[1] = T[0].tv_nsec;
 
