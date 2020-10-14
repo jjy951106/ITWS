@@ -181,7 +181,7 @@ void iterative_offset_calculated(int sock, int32_t *offset, struct sockaddr_in *
         nanosleep(&s, NULL);
     }
 
-    printf("iteration : %d \n", iteration);
+    //printf("iteration : %d \n", iteration);
 
     if(iteration >= 3){ // the minimum number of iterations that within the deviation is more than 5 in total 10
         offset[0] /= iteration;
@@ -265,7 +265,7 @@ void mode_2(int sock, struct sockaddr_in *server_addr, int protocol){
 
         offset_calculated(sock, offset, server_addr, protocol);
 
-        printf("offset : %ds %dns\n", offset[0], offset[1]);
+        //printf("offset : %ds %dns\n", offset[0], offset[1]);
 
         sleep(offset_interval);
 
@@ -291,8 +291,7 @@ void mode_3(int sock, struct sockaddr_in *server_addr, int protocol){
 
     offset_calculated(sock, offset, server_addr, protocol);
 
-    printf("offset : %ds.%dns\n", offset[0], offset[1]);
-
+    printf("%d", (offset[0] * 1000) + (offset[1] / 1000000)); // ms
 }
 
 int TCP_socket(struct sockaddr_in *server_addr, int mode, int protocol){
@@ -380,9 +379,11 @@ int main(int argc, char *argv[]){
     server_addr.sin_addr.s_addr = inet_addr(SERVER /* 192.168.0.160 */);
     server_addr.sin_port = htons(PORT /* 5005 */);
 
-    if(argc >= 2){
+    if(argc >= 2) mode = atoi(argv[1]);   
+
+    if(argc >= 3){
         // To retrieve host information
-        host_entry = gethostbyname(argv[1]);
+        host_entry = gethostbyname(argv[2]);
 
         // To convert an Internet network
         // address into ASCII string
@@ -391,15 +392,13 @@ int main(int argc, char *argv[]){
         server_addr.sin_addr.s_addr = inet_addr(IPbuffer);
     }
 
-    if(argc >= 3) thr = atoi(argv[2]); // threshold default 5,000,000 ns
-
     if(argc >= 4) server_addr.sin_port = htons(atoi(argv[3]));
 
-    if(argc == 5 && atoi(argv[4]) == 1) protocol = 1; // default 0 : TCP
+    if(argc >= 5 && atoi(argv[4]) == 1) protocol = 1; // default 0 : TCP
 
-    //if(argc == 6) mode = atoi(argv[5]);
+    if(argc == 6) thr = atoi(argv[5]) * 1000000; // threshold default 5,000,000 ns // input ms
 
-    if (argc > 5) {
+    if (argc > 6) {
 		printf("Input exceeded\n");
 		return 0;
 	}
