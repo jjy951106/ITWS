@@ -233,10 +233,10 @@ int main(int argc, char *argv[]){
 	}
 
     if (protocol == 0)
-		TCP_server(&server_addr);
+		UDP_server(&server_addr);
 
 	else
-		UDP_server(&server_addr);
+		TCP_server(&server_addr);
 
     return 0;
 }

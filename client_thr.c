@@ -65,17 +65,19 @@ int select_mode(int sock, int mode, struct sockaddr_in *server_addr, int protoco
 
 void send_socket(int sock, struct sockaddr_in *server_addr, int protocol){
 
-    if(protocol == 0 /* TCP */)
-        if(send(sock, binary, sizeof(binary), 0) < 0)
-            err("send()");
-
-    if(protocol == 1 /* UDP */)
+    if(protocol == 0 /* UDP */)
         if(sendto(sock, binary, sizeof(binary), 0, (struct sockaddr*)server_addr, sizeof(*server_addr)) < 0)
             err("sendto()");
 
+    if(protocol == 1 /* TCP */)
+        if(send(sock, binary, sizeof(binary), 0) < 0)
+            err("send()");
+
 }
 
-void recv_socket(int sock, struct msghdr *msg){
+void recv_socket(int sock, struct msghdr *msg, struct sockaddr_in *server_addr, int protocol){
+
+    int re;
 
     /* recvpacket */
     char data[256];
@@ -95,7 +97,12 @@ void recv_socket(int sock, struct msghdr *msg){
     msg->msg_control = &control;
     msg->msg_controllen = sizeof(control);
 
-    if(recvmsg(sock, msg, 0) < 0)
+    if((re = recvmsg(sock, msg, 0)) == -1){
+        send_socket(sock, server_addr, protocol);
+        recv_socket(sock, &msg, server_addr, protocol);
+    }
+
+    if(re < -1)
         err("recv()");
 
 }
@@ -110,7 +117,7 @@ void initialized_T(int sock, struct sockaddr_in *server_addr, int protocol){
 
     send_socket(sock, server_addr, protocol);
 
-    recv_socket(sock, &msg);
+    recv_socket(sock, &msg, server_addr, protocol);
 
     T_int = (int32_t *)msg.msg_iov->iov_base;
 
@@ -135,7 +142,7 @@ void offset_calculated(int sock, int *offset, struct sockaddr_in *server_addr, i
 
     send_socket(sock, server_addr, protocol);
 
-    recv_socket(sock, &msg);
+    recv_socket(sock, &msg, server_addr, protocol);
 
     T_int = (int32_t *)msg.msg_iov->iov_base;
 
@@ -147,8 +154,10 @@ void offset_calculated(int sock, int *offset, struct sockaddr_in *server_addr, i
     memcpy(&T_, &T[2], sizeof(struct timespec));
 
     for (cm = CMSG_FIRSTHDR(&msg); cm; cm = CMSG_NXTHDR(&msg, cm))
-        if (SOL_SOCKET == cm->cmsg_level && SO_TIMESTAMPNS == cm->cmsg_type)
+        if (SOL_SOCKET == cm->cmsg_level && SO_TIMESTAMPNS == cm->cmsg_type){
+            //printf("SO_TIMESTAMPNS action\n");
             memcpy(&T[3], (struct timespec *)CMSG_DATA(cm), sizeof(struct timespec));
+        }
 
     /* T1 : T[0], T2 : T_int[0], T_int[1], T3 : T_int[2], T_int[3], T4 : T[1] */
     offset[0] = ((T[1].tv_sec - T[0].tv_sec) - (T[3].tv_sec - T[2].tv_sec)) / 2;
@@ -298,22 +307,30 @@ int TCP_socket(struct sockaddr_in *server_addr, int mode, int protocol){
 
     int sock, enabled = 1;
 
+    struct timeval tv;
+
+    tv.tv_sec = 3;
+    tv.tv_usec = 0;
+
     /* TCP */
 
     if((sock = socket(AF_INET, SOCK_STREAM, 0)) < 0)
         err("TCP socket()");
 
-    printf("TCP socket() success\n");
+    //printf("TCP socket() success\n");
 
     /* SO_TIMESTAMPNS */
 
     if(setsockopt(sock, SOL_SOCKET, SO_TIMESTAMPNS, &enabled, sizeof(enabled)) < 0)
-        err("setsockopt()");
+        err("SO_TIMESTAMPNS setsockopt()");
+
+    if(setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, (char*)&tv, sizeof(struct timeval)) < 0)
+        err("SO_RCVTIMEO setsockopt()");
 
     if(connect(sock, (struct sockaddr*)server_addr, sizeof(*server_addr)) < 0)
         err("connect()");
 
-    printf("conect() success\n\n");
+    //printf("conect() success\n\n");
 
     select_mode(sock, mode, server_addr, protocol);
 
@@ -326,6 +343,11 @@ int TCP_socket(struct sockaddr_in *server_addr, int mode, int protocol){
 int UDP_socket(struct sockaddr_in *server_addr, int mode, int protocol){
 
     int sock, enabled = 1;
+
+    struct timeval tv;
+
+    tv.tv_sec = 3;
+    tv.tv_usec = 0;
 
     struct sockaddr_in client_addr;
 
@@ -340,17 +362,20 @@ int UDP_socket(struct sockaddr_in *server_addr, int mode, int protocol){
     if((sock = socket(AF_INET, SOCK_DGRAM, 0)) < 0)
         err("UDP socket()");
 
-    printf("UDP socket() success\n");
+    //printf("UDP socket() success\n");
 
     /* SO_TIMESTAMPNS */
 
     if(setsockopt(sock, SOL_SOCKET, SO_TIMESTAMPNS, &enabled, sizeof(enabled)) < 0)
-        err("setsockopt()");
+        err("SO_TIMESTAMPNS setsockopt()");
+
+    if(setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, (char*)&tv, sizeof(struct timeval)) < 0)
+        err("SO_RCVTIMEO setsockopt()");
 
     if(bind(sock, (struct sockaddr*)&client_addr, client_len) < 0)
         err("bind()");
 
-    printf("bind() success\n\n");
+    //printf("bind() success\n\n");
 
     select_mode(sock, mode, server_addr, protocol);
 
@@ -368,10 +393,6 @@ int main(int argc, char *argv[]){
 
     char *IPbuffer;
     struct hostent *host_entry;
-
-    /* filename server_ip port mode(default 1) */
-
-    //printf("TCP : 0 (default), UDP : 1\n\nmode_1 : once, mode_2 : continuous, mode_3 : offset\n\nIP address, threshold, port, protocol (mode)\n\n");
 
     memset(&server_addr, '\0', sizeof(server_addr));
 
@@ -404,13 +425,13 @@ int main(int argc, char *argv[]){
 	}
 
     if (protocol == 0){
-        printf("TCP client\n\n");
-		TCP_socket(&server_addr, mode, protocol);
+        //printf("UDP client\n\n");
+		UDP_socket(&server_addr, mode, protocol);
     }
 
 	else{
-        printf("UDP client\n\n");
-		UDP_socket(&server_addr, mode, protocol);
+        //printf("TCP client\n\n");
+		TCP_socket(&server_addr, mode, protocol);
     }
 
     return 0;
