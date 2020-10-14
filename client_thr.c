@@ -214,7 +214,7 @@ void mode_1(int sock, struct sockaddr_in *server_addr, int protocol){
 
         iterative_offset_calculated(sock, offset, server_addr, protocol);
 
-        printf("offset : %d.%d\n", offset[0], offset[1]);
+        //printf("offset : %d.%d\n", offset[0], offset[1]);
 
         if(offset[0] == 0 && offset[1] == 0) // Not enough samples
             continue;
@@ -254,7 +254,7 @@ void mode_2(int sock, struct sockaddr_in *server_addr, int protocol){
 
     struct timespec C; // C (current)
 
-    int period = 0, offset_interval = 3; // offset measurament interval
+    int offset_interval = 3; // offset measurament interval
 
     initialized_T(sock, server_addr, protocol);
 
@@ -265,22 +265,17 @@ void mode_2(int sock, struct sockaddr_in *server_addr, int protocol){
 
         offset_calculated(sock, offset, server_addr, protocol);
 
-        sleep(offset_interval);
-        period += offset_interval;
+        printf("offset : %ds %dns\n", offset[0], offset[1]);
 
-        if(abs(offset[0]) > 1 || abs(offset[1]) > thr){
-            printf("offset_check : %d\n", ++offset_check);
-        }
+        sleep(offset_interval);
+
+        if(abs(offset[0]) > 1 || abs(offset[1]) > thr) offset_check++;
 
         if(offset_check >= 3){
 
             offset_check = 0;
 
             mode_1(sock, server_addr, protocol);
-
-            printf("period : %ds\n", period);
-
-            period = 0;
 
             sleep(3);
 
@@ -296,7 +291,7 @@ void mode_3(int sock, struct sockaddr_in *server_addr, int protocol){
 
     offset_calculated(sock, offset, server_addr, protocol);
 
-    printf("offset : %d.%d\n", offset[0], offset[1]);
+    printf("offset : %ds.%dns\n", offset[0], offset[1]);
 
 }
 
