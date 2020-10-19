@@ -75,9 +75,11 @@ void send_socket(int sock, struct sockaddr_in *server_addr, int protocol){
 
 }
 
-void recv_socket(int sock, struct msghdr *msg, struct sockaddr_in *server_addr, int protocol){
+void recv_socket(int sock, struct msghdr *msg, struct sockaddr_in *server_addr, int protocol, struct timespec *T){
 
     int re;
+
+    struct timespec T;
 
     /* recvpacket */
     char data[256];
@@ -98,8 +100,9 @@ void recv_socket(int sock, struct msghdr *msg, struct sockaddr_in *server_addr, 
     msg->msg_controllen = sizeof(control);
 
     if((re = recvmsg(sock, msg, 0)) == -1){
+        clock_gettime(CLOCK_REALTIME, T);
         send_socket(sock, server_addr, protocol);
-        recv_socket(sock, &msg, server_addr, protocol);
+        recv_socket(sock, &msg, server_addr, protocol, T);
     }
 
     if(re < -1)
@@ -117,7 +120,7 @@ void initialized_T(int sock, struct sockaddr_in *server_addr, int protocol){
 
     send_socket(sock, server_addr, protocol);
 
-    recv_socket(sock, &msg, server_addr, protocol);
+    recv_socket(sock, &msg, server_addr, protocol, NULL);
 
     T_int = (int32_t *)msg.msg_iov->iov_base;
 
@@ -142,7 +145,7 @@ void offset_calculated(int sock, int *offset, struct sockaddr_in *server_addr, i
 
     send_socket(sock, server_addr, protocol);
 
-    recv_socket(sock, &msg, server_addr, protocol);
+    recv_socket(sock, &msg, server_addr, protocol, &T[0]);
 
     T_int = (int32_t *)msg.msg_iov->iov_base;
 
