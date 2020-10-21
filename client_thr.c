@@ -79,8 +79,6 @@ void recv_socket(int sock, struct msghdr *msg, struct sockaddr_in *server_addr, 
 
     int re;
 
-    struct timespec T;
-
     /* recvpacket */
     char data[256];
     struct iovec entry;
@@ -114,13 +112,13 @@ void initialized_T(int sock, struct sockaddr_in *server_addr, int protocol){
 
     struct msghdr msg;
 
-    struct timespec T;
+    struct timespec T, NULL_T;
 
     int32_t *T_int;
 
     send_socket(sock, server_addr, protocol);
 
-    recv_socket(sock, &msg, server_addr, protocol, NULL);
+    recv_socket(sock, &msg, server_addr, protocol, &NULL_T);
 
     T_int = (int32_t *)msg.msg_iov->iov_base;
 
