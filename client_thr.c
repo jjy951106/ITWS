@@ -97,10 +97,13 @@ void recv_socket(int sock, struct msghdr *msg, struct sockaddr_in *server_addr, 
     msg->msg_control = &control;
     msg->msg_controllen = sizeof(control);
 
-    if((re = recvmsg(sock, msg, 0)) == -1){
+    re = recvmsg(sock, msg, 0);
+
+    while(re == -1){
         clock_gettime(CLOCK_REALTIME, T);
+        //printf("retransmission : %d.%d\n", T->tv_sec, T->tv_nsec);//
         send_socket(sock, server_addr, protocol);
-        recv_socket(sock, &msg, server_addr, protocol, T);
+        re = recvmsg(sock, msg, 0);
     }
 
     if(re < -1)
@@ -143,14 +146,14 @@ void offset_calculated(int sock, int *offset, struct sockaddr_in *server_addr, i
 
     send_socket(sock, server_addr, protocol);
 
-    recv_socket(sock, &msg, server_addr, protocol, &T[0]);
+    recv_socket(sock, &msg, server_addr, protocol, &T[0]); // print critical offset calculation error
+
+    clock_gettime(CLOCK_REALTIME, &T[3]); // if no action SO_TIMESTAMPNS
 
     T_int = (int32_t *)msg.msg_iov->iov_base;
 
     T[1].tv_sec = T_int[0]; T[1].tv_nsec = T_int[1];
     T[2].tv_sec = T_int[2]; T[2].tv_nsec = T_int[3];
-
-    clock_gettime(CLOCK_REALTIME, &T[3]); // if no action SO_TIMESTAMPNS
 
     memcpy(&T_, &T[2], sizeof(struct timespec));
 
@@ -165,6 +168,7 @@ void offset_calculated(int sock, int *offset, struct sockaddr_in *server_addr, i
 
     offset[1] = ((T[1].tv_nsec - T[0].tv_nsec) - (T[3].tv_nsec - T[2].tv_nsec)) / 2;
 
+    //printf("T[0] : %d.%d\n", T[0].tv_sec, T[0].tv_nsec);//
 }
 
 void iterative_offset_calculated(int sock, int32_t *offset, struct sockaddr_in *server_addr, int protocol){
@@ -301,7 +305,8 @@ void mode_3(int sock, struct sockaddr_in *server_addr, int protocol){
 
     offset_calculated(sock, offset, server_addr, protocol);
 
-    printf("%d", (offset[0] * 1000) + (offset[1] / 1000000)); // ms
+    printf("%d\n", (offset[0] * 1000) + (offset[1] / 1000000)); // ms
+
 }
 
 int TCP_socket(struct sockaddr_in *server_addr, int mode, int protocol){
