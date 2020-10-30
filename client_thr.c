@@ -34,7 +34,9 @@
 
 int32_t DEVIATION = 10000000; // ns
 
-struct timespec T_;
+struct timespec T_, T_present;
+
+int32_t delay[2] = { 0, };
 
 int32_t thr = 5000000; // threshold default 5,000,000 ns
 
@@ -150,6 +152,8 @@ void offset_calculated(int sock, int *offset, struct sockaddr_in *server_addr, i
 
     clock_gettime(CLOCK_REALTIME, &T[3]); // if no action SO_TIMESTAMPNS
 
+    T_present = T[3];
+
     T_int = (int32_t *)msg.msg_iov->iov_base;
 
     T[1].tv_sec = T_int[0]; T[1].tv_nsec = T_int[1];
@@ -169,6 +173,12 @@ void offset_calculated(int sock, int *offset, struct sockaddr_in *server_addr, i
     offset[1] = ((T[1].tv_nsec - T[0].tv_nsec) - (T[3].tv_nsec - T[2].tv_nsec)) / 2;
 
     //printf("T[0] : %d.%d\n", T[0].tv_sec, T[0].tv_nsec);//
+    
+    // delay add
+
+    delay[0] = ((T[1].tv_sec - T[0].tv_sec) + (T[3].tv_sec - T[2].tv_sec)) / 2;
+
+    delay[1] = ((T[1].tv_nsec - T[0].tv_nsec) + (T[3].tv_nsec - T[2].tv_nsec)) / 2;
 }
 
 void iterative_offset_calculated(int sock, int32_t *offset, struct sockaddr_in *server_addr, int protocol){
@@ -301,11 +311,27 @@ void mode_2(int sock, struct sockaddr_in *server_addr, int protocol){
 
 void mode_3(int sock, struct sockaddr_in *server_addr, int protocol){
 
+    struct tm *server_date, *drone_date;
+
     int32_t offset[2] = { 0, };
+
+    drone_date = localtime(&T_present.tv_sec);
+
+    // delay reward
+
+    T_.tv_sec += delay[0];
+
+    T_.tv_nsec += delay[1];
+
+    server_date = localtime(&T_.tv_sec);
 
     offset_calculated(sock, offset, server_addr, protocol);
 
     printf("%d\n", (offset[0] * 1000) + (offset[1] / 1000000)); // ms
+
+    printf("Drone Time : %d/%d/%d %d:%d:%d%d\n" , drone_date->tm_year + 1900 , drone_date->tm_mon + 1 , drone_date->tm_mday , drone_date->tm_hour , drone_date->tm_min , drone_date->tm_sec, (T_present.tv_nsec / 1000000)); 
+
+    printf("Server Time : %d/%d/%d %d:%d:%d%d\n" , server_date->tm_year + 1900 , server_date->tm_mon + 1 , server_date->tm_mday , server_date->tm_hour , server_date->tm_min , server_date->tm_sec, (T_.tv_nsec / 1000000)); 
 
 }
 
