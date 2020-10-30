@@ -331,23 +331,39 @@ void mode_3(int sock, struct sockaddr_in *server_addr, int protocol){
     drone_date = localtime(&t1);
     server_date = localtime(&t2);
 
-    printf("%d+", (offset[0] * 1000) + (offset[1] / 1000000)); // ms
-
     drone_ms = T_present.tv_nsec / 1000000;
 
     server_ms = T_.tv_nsec / 1000000;
 
-    // Drone Time
-    if(drone_ms < 100)
-        printf("%d-%d-%dT%d%d%d0%d+", drone_date->tm_year + 1900 , drone_date->tm_mon + 1 , drone_date->tm_mday , drone_date->tm_hour , drone_date->tm_min , drone_date->tm_sec, drone_ms); 
-    else
-        printf("%d-%d-%dT%d%d%d%d+", drone_date->tm_year + 1900 , drone_date->tm_mon + 1 , drone_date->tm_mday , drone_date->tm_hour , drone_date->tm_min , drone_date->tm_sec, drone_ms);
-
-    //Server Time
-    if(server_ms < 100)
-        printf("%d-%d-%dT%d%d%d0%d", server_date->tm_year + 1900 , server_date->tm_mon + 1 , server_date->tm_mday , server_date->tm_hour , server_date->tm_min , server_date->tm_sec, server_ms); 
-    else
-        printf("%d-%d-%dT%d%d%d%d", server_date->tm_year + 1900 , server_date->tm_mon + 1 , server_date->tm_mday , server_date->tm_hour , server_date->tm_min , server_date->tm_sec, server_ms); 
+    // Server Time
+    if(server_ms < 100){
+        if(server_date->tm_hour < 10)
+            printf("%d%d%dT0%d%d%d0%d+", server_date->tm_year + 1900 , server_date->tm_mon + 1 , server_date->tm_mday , server_date->tm_hour , server_date->tm_min , server_date->tm_sec, server_ms);
+        else
+            printf("%d%d%dT%d%d%d0%d+", server_date->tm_year + 1900 , server_date->tm_mon + 1 , server_date->tm_mday , server_date->tm_hour , server_date->tm_min , server_date->tm_sec, server_ms);
+    }
+    else{
+        if(server_date->tm_hour < 10)
+            printf("%d%d%dT0%d%d%d%d+", server_date->tm_year + 1900 , server_date->tm_mon + 1 , server_date->tm_mday , server_date->tm_hour , server_date->tm_min , server_date->tm_sec, server_ms);
+        else
+            printf("%d%d%dT%d%d%d%d+", server_date->tm_year + 1900 , server_date->tm_mon + 1 , server_date->tm_mday , server_date->tm_hour , server_date->tm_min , server_date->tm_sec, server_ms);
+    }
+    // MC_Drone Time
+    if(drone_ms < 100){
+        if(drone_date->tm_hour < 10)
+            printf("%d%d%dT0%d%d%d0%d+", drone_date->tm_year + 1900 , drone_date->tm_mon + 1 , drone_date->tm_mday , drone_date->tm_hour , drone_date->tm_min , drone_date->tm_sec, drone_ms);
+        else
+            printf("%d%d%dT%d%d%d0%d+", drone_date->tm_year + 1900 , drone_date->tm_mon + 1 , drone_date->tm_mday , drone_date->tm_hour , drone_date->tm_min , drone_date->tm_sec, drone_ms);
+    }
+    else{
+        if(drone_date->tm_hour < 10)
+            printf("%d%d%dT0%d%d%d%d+", drone_date->tm_year + 1900 , drone_date->tm_mon + 1 , drone_date->tm_mday , drone_date->tm_hour , drone_date->tm_min , drone_date->tm_sec, drone_ms);
+        else
+            printf("%d%d%dT%d%d%d%d+", drone_date->tm_year + 1900 , drone_date->tm_mon + 1 , drone_date->tm_mday , drone_date->tm_hour , drone_date->tm_min , drone_date->tm_sec, drone_ms);
+    }
+    
+    // Offset
+    printf("%d+", (offset[0] * 1000) + (offset[1] / 1000000)); // ms
 }
 
 int TCP_socket(struct sockaddr_in *server_addr, int mode, int protocol){
