@@ -331,21 +331,23 @@ void mode_3(int sock, struct sockaddr_in *server_addr, int protocol){
     drone_date = localtime(&t1);
     server_date = localtime(&t2);
 
-    printf("%d\n", (offset[0] * 1000) + (offset[1] / 1000000)); // ms
+    printf("%d+", (offset[0] * 1000) + (offset[1] / 1000000)); // ms
 
     drone_ms = T_present.tv_nsec / 1000000;
 
     server_ms = T_.tv_nsec / 1000000;
 
+    // Drone Time
     if(drone_ms < 100)
-        printf("Drone Time : %d/%d/%d %d:%d:%d0%d\n" , drone_date->tm_year + 1900 , drone_date->tm_mon + 1 , drone_date->tm_mday , drone_date->tm_hour , drone_date->tm_min , drone_date->tm_sec, drone_ms); 
+        printf("%d/%d/%d %d:%d:%d0%d+", drone_date->tm_year + 1900 , drone_date->tm_mon + 1 , drone_date->tm_mday , drone_date->tm_hour , drone_date->tm_min , drone_date->tm_sec, drone_ms); 
     else
-        printf("Drone Time : %d/%d/%d %d:%d:%d%d\n" , drone_date->tm_year + 1900 , drone_date->tm_mon + 1 , drone_date->tm_mday , drone_date->tm_hour , drone_date->tm_min , drone_date->tm_sec, drone_ms);
+        printf("%d/%d/%d %d:%d:%d%d+", drone_date->tm_year + 1900 , drone_date->tm_mon + 1 , drone_date->tm_mday , drone_date->tm_hour , drone_date->tm_min , drone_date->tm_sec, drone_ms);
 
+    //Server Time
     if(server_ms < 100)
-        printf("Server Time : %d/%d/%d %d:%d:%d0%d\n" , server_date->tm_year + 1900 , server_date->tm_mon + 1 , server_date->tm_mday , server_date->tm_hour , server_date->tm_min , server_date->tm_sec, server_ms); 
+        printf("%d/%d/%d %d:%d:%d0%d", server_date->tm_year + 1900 , server_date->tm_mon + 1 , server_date->tm_mday , server_date->tm_hour , server_date->tm_min , server_date->tm_sec, server_ms); 
     else
-        printf("Server Time : %d/%d/%d %d:%d:%d%d\n" , server_date->tm_year + 1900 , server_date->tm_mon + 1 , server_date->tm_mday , server_date->tm_hour , server_date->tm_min , server_date->tm_sec, server_ms); 
+        printf("%d/%d/%d %d:%d:%d%d", server_date->tm_year + 1900 , server_date->tm_mon + 1 , server_date->tm_mday , server_date->tm_hour , server_date->tm_min , server_date->tm_sec, server_ms); 
 }
 
 int TCP_socket(struct sockaddr_in *server_addr, int mode, int protocol){
