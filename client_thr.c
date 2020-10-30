@@ -152,8 +152,6 @@ void offset_calculated(int sock, int *offset, struct sockaddr_in *server_addr, i
 
     clock_gettime(CLOCK_REALTIME, &T[3]); // if no action SO_TIMESTAMPNS
 
-    T_present = T[3];
-
     T_int = (int32_t *)msg.msg_iov->iov_base;
 
     T[1].tv_sec = T_int[0]; T[1].tv_nsec = T_int[1];
@@ -166,6 +164,8 @@ void offset_calculated(int sock, int *offset, struct sockaddr_in *server_addr, i
             //printf("SO_TIMESTAMPNS action\n");
             memcpy(&T[3], (struct timespec *)CMSG_DATA(cm), sizeof(struct timespec));
         }
+
+    memcpy(&T_present, &T[3], sizeof(struct timespec));
 
     /* T1 : T[0], T2 : T_int[0], T_int[1], T3 : T_int[2], T_int[3], T4 : T[1] */
     offset[0] = ((T[1].tv_sec - T[0].tv_sec) - (T[3].tv_sec - T[2].tv_sec)) / 2;
@@ -313,9 +313,11 @@ void mode_3(int sock, struct sockaddr_in *server_addr, int protocol){
 
     struct tm *server_date, *drone_date;
 
+    int drone_ms, server_ms;
+
     int32_t offset[2] = { 0, };
 
-    drone_date = localtime(&T_present.tv_sec);
+    offset_calculated(sock, offset, server_addr, protocol);
 
     // delay reward
 
@@ -323,16 +325,27 @@ void mode_3(int sock, struct sockaddr_in *server_addr, int protocol){
 
     T_.tv_nsec += delay[1];
 
-    server_date = localtime(&T_.tv_sec);
+    const time_t t1 = T_present.tv_sec;
+    const time_t t2 = T_.tv_sec;
 
-    offset_calculated(sock, offset, server_addr, protocol);
+    drone_date = localtime(&t1);
+    server_date = localtime(&t2);
 
     printf("%d\n", (offset[0] * 1000) + (offset[1] / 1000000)); // ms
 
-    printf("Drone Time : %d/%d/%d %d:%d:%d%d\n" , drone_date->tm_year + 1900 , drone_date->tm_mon + 1 , drone_date->tm_mday , drone_date->tm_hour , drone_date->tm_min , drone_date->tm_sec, (T_present.tv_nsec / 1000000)); 
+    drone_ms = T_present.tv_nsec / 1000000;
 
-    printf("Server Time : %d/%d/%d %d:%d:%d%d\n" , server_date->tm_year + 1900 , server_date->tm_mon + 1 , server_date->tm_mday , server_date->tm_hour , server_date->tm_min , server_date->tm_sec, (T_.tv_nsec / 1000000)); 
+    server_ms = T_.tv_nsec / 1000000;
 
+    if(drone_ms < 100)
+        printf("Drone Time : %d/%d/%d %d:%d:%d0%d\n" , drone_date->tm_year + 1900 , drone_date->tm_mon + 1 , drone_date->tm_mday , drone_date->tm_hour , drone_date->tm_min , drone_date->tm_sec, drone_ms); 
+    else
+        printf("Drone Time : %d/%d/%d %d:%d:%d%d\n" , drone_date->tm_year + 1900 , drone_date->tm_mon + 1 , drone_date->tm_mday , drone_date->tm_hour , drone_date->tm_min , drone_date->tm_sec, drone_ms);
+
+    if(server_ms < 100)
+        printf("Server Time : %d/%d/%d %d:%d:%d0%d\n" , server_date->tm_year + 1900 , server_date->tm_mon + 1 , server_date->tm_mday , server_date->tm_hour , server_date->tm_min , server_date->tm_sec, server_ms); 
+    else
+        printf("Server Time : %d/%d/%d %d:%d:%d%d\n" , server_date->tm_year + 1900 , server_date->tm_mon + 1 , server_date->tm_mday , server_date->tm_hour , server_date->tm_min , server_date->tm_sec, server_ms); 
 }
 
 int TCP_socket(struct sockaddr_in *server_addr, int mode, int protocol){
