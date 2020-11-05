@@ -245,6 +245,8 @@ int TCP_server(struct sockaddr_in *server_addr){
 
 int UDP_server(struct sockaddr_in *server_addr){
 
+    pthread_t p_thread[BACKLOG]; // thread identifier
+
     struct sockaddr_in offset_server_addr;
 
     memset(&offset_server_addr, '\0', sizeof(offset_server_addr));
@@ -278,7 +280,7 @@ int UDP_server(struct sockaddr_in *server_addr){
     if(bind(sock, (struct sockaddr*)server_addr, sizeof(*server_addr)) < 0)
         err("bind()");
     
-    if(bind(offset_sock, (struct sockaddr*)server_addr, sizeof(*server_addr)) < 0)
+    if(bind(offset_sock, (struct sockaddr*)&offset_server_addr, sizeof(offset_server_addr)) < 0)
         err("offset_bind()");
 
     printf("bind() success\n\n");
