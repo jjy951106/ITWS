@@ -16,6 +16,12 @@
 
 #define PORT 5005
 
+#define OFFSET_PORT_UDP 5006
+
+#define UDP_OFFSET_THREAD 1 // 쓰래드 수
+
+#define UDP_SYNC_THREAD 1 // 쓰래드 수
+
 #define DEFAULT_BUFLEN 512
 
 int Thread_t = 0; // total thread number played
@@ -45,7 +51,7 @@ unsigned int WINAPI Server_Socket_Thread(void* arg) {
 
 		T_int[0] = T[0].tv_sec; T_int[1] = T[0].tv_nsec;
 
-		Sleep(1); // millisecs term
+		Sleep(1); // millisecs term bad
 
 		timespec_get(&T[1], TIME_UTC);
 
@@ -62,6 +68,92 @@ unsigned int WINAPI Server_Socket_Thread(void* arg) {
 	Thread_t--; // Thread crash caution
 
 	closesocket(sock);
+
+	return 0;
+
+}
+
+unsigned int WINAPI UDP_OFFSET_Thread(void* arg) {
+
+	SOCKET sock = (SOCKET*)arg;
+
+	SOCKADDR_IN client_addr;
+
+	int client_len = sizeof(client_addr);
+
+	struct timespec T[2];
+
+	int32_t T_int[4]; // for compatiblility between 32bit and 64bit 
+
+	char recv_buf[DEFAULT_BUFLEN];
+
+	int recv_buflen = sizeof(recv_buf);
+
+	while (recvfrom(sock, recv_buf, recv_buflen, 0, (SOCKADDR*)&client_addr, &client_len) != SOCKET_ERROR) {
+
+		printf("Client IP : %s Port : %d\n", inet_ntoa(client_addr.sin_addr), ntohs(client_addr.sin_port));
+
+		timespec_get(&T[0], TIME_UTC);
+
+		T_int[0] = T[0].tv_sec; T_int[1] = T[0].tv_nsec;
+
+		//Sleep(1); // millisecs term
+
+		timespec_get(&T[1], TIME_UTC);
+
+		T_int[2] = T[1].tv_sec; T_int[3] = T[1].tv_nsec;
+
+		sendto(sock, T_int, sizeof(T_int), 0, (SOCKADDR *)&client_addr, client_len);
+
+		printf("T2: %ld", T[0].tv_sec); // time_t (long) : %ld long: %ld
+		printf(".%ld\n", T[0].tv_nsec);
+		printf("T3: %ld", T[1].tv_sec);
+		printf(".%ld\n\n", T[1].tv_nsec);
+	}
+
+	return 0;
+
+}
+
+unsigned int WINAPI UDP_SYNC_Thread(void* arg){
+
+	SOCKET sock = (SOCKET*)arg;
+
+	SOCKADDR_IN client_addr;
+
+	int client_len = sizeof(client_addr);
+
+	struct timespec T[2];
+
+	int32_t T_int[4]; // for compatiblility between 32bit and 64bit 
+
+	char recv_buf[DEFAULT_BUFLEN];
+
+	int recv_buflen = sizeof(recv_buf);
+
+	while (recvfrom(sock, recv_buf, recv_buflen, 0, (SOCKADDR*)&client_addr, &client_len) != SOCKET_ERROR) {
+
+		printf("Client IP : %s Port : %d\n", inet_ntoa(client_addr.sin_addr), ntohs(client_addr.sin_port));
+
+		timespec_get(&T[0], TIME_UTC);
+
+		T_int[0] = T[0].tv_sec; T_int[1] = T[0].tv_nsec;
+
+		//Sleep(1); // millisecs term
+
+		timespec_get(&T[1], TIME_UTC);
+
+		T_int[2] = T[1].tv_sec; T_int[3] = T[1].tv_nsec;
+
+		sendto(sock, T_int, sizeof(T_int), 0, (SOCKADDR *)&client_addr, client_len);
+
+		printf("T2: %ld", T[0].tv_sec); // time_t (long) : %ld long: %ld
+		printf(".%ld\n", T[0].tv_nsec);
+		printf("T3: %ld", T[1].tv_sec);
+		printf(".%ld\n\n", T[1].tv_nsec);
+	}
+
+	Thread_t--;
 
 	return 0;
 
@@ -94,7 +186,7 @@ int TCP_server(SOCKADDR_IN *server_addr) {
 
 	printf("listen() success\n");
 
-	while ((new = accept(sock, (SOCKADDR*)&client_addr, &client_len)) != SOCKET_ERROR) {
+	while ((new = accept(sock, (SOCKADDR*)&client_addr, &client_len)) != SOCKET_ERROR) { // 새로운 소켓으로 통신
 
 		printf("accept() success\n");
 
@@ -115,55 +207,57 @@ int TCP_server(SOCKADDR_IN *server_addr) {
 
 int UDP_server(SOCKADDR_IN* server_addr) {
 
-	SOCKET sock;
+	/* thread variables */
+	HANDLE h_thread[BACKLOG] = { NULL, };
+	DWORD thread_id = NULL;
 
-	SOCKADDR_IN client_addr;
+	SOCKADDR_IN offset_server_addr;
 
-	int client_len = sizeof(client_addr);
+	SOCKET sock, offset_sock;
 
-	struct timespec T[2];
+	int i;
 
-	int32_t T_int[4]; // for compatiblility between 32bit and 64bit 
+	memset(&offset_server_addr, 0, sizeof(offset_server_addr));
 
-	char recv_buf[DEFAULT_BUFLEN];
+	offset_server_addr.sin_family = AF_INET;
+	offset_server_addr.sin_addr.S_un.S_addr = htonl(INADDR_ANY);
+	offset_server_addr.sin_port = htons(OFFSET_PORT_UDP);
 
-	int recv_buflen = sizeof(recv_buf);
+	Thread_t = UDP_SYNC_THREAD;
 
 	if ((sock = socket(AF_INET, SOCK_DGRAM, 0)) == INVALID_SOCKET)
 		err("UDP socket()");
+
+	if ((offset_sock = socket(AF_INET, SOCK_DGRAM, 0)) == INVALID_SOCKET)
+		err("UDP offset_socket()");
 
 	printf("UDP socket() success\n");
 
 	if (bind(sock, (SOCKADDR*)server_addr, sizeof(*server_addr)) == SOCKET_ERROR /* SOCKET_ERROR == -1 */)
 		err("bind()");
 
+	if (bind(offset_sock, (SOCKADDR*)&offset_server_addr, sizeof(offset_server_addr)) == SOCKET_ERROR /* SOCKET_ERROR == -1 */)
+		err("offset_bind()");
+
 	printf("bind() success\n");
 
-	while (recvfrom(sock, recv_buf, recv_buflen, 0, (SOCKADDR*)&client_addr, &client_len) != SOCKET_ERROR) {
-
-		printf("Client IP : %s Port : %d\n", inet_ntoa(client_addr.sin_addr), ntohs(client_addr.sin_port));
-
-		timespec_get(&T[0], TIME_UTC);
-
-		T_int[0] = T[0].tv_sec; T_int[1] = T[0].tv_nsec;
-
-		Sleep(1); // millisecs term
-
-		timespec_get(&T[1], TIME_UTC);
-
-		T_int[2] = T[1].tv_sec; T_int[3] = T[1].tv_nsec;
-
-		sendto(sock, T_int, sizeof(T_int), 0, (SOCKADDR *)&client_addr, client_len);
-
-		printf("T2: %ld", T[0].tv_sec); // time_t (long) : %ld long: %ld
-		printf(".%ld\n", T[0].tv_nsec);
-		printf("T3: %ld", T[1].tv_sec);
-		printf(".%ld\n\n", T[1].tv_nsec);
+	for (i = 0; i < UDP_OFFSET_THREAD; i++){
+		if ((h_thread[0] = (HANDLE)_beginthreadex(NULL, 0, UDP_OFFSET_Thread, (void*)offset_sock, 0, (unsigned*)&thread_id)) == 0) // if thread create is failed, return 0
+			printf("thread id : %d create error\n", thread_id);
 	}
 
+	for (i = 0; i < UDP_SYNC_THREAD; i++){
+		if ((h_thread[0] = (HANDLE)_beginthreadex(NULL, 0, UDP_SYNC_Thread, (void*)sock, 0, (unsigned*)&thread_id)) == 0) // if thread create is failed, return 0
+			printf("thread id : %d create error\n", thread_id);
+	}
+
+	while(Thread_t != 0);
+
 	closesocket(sock); // Unlike using close in Linux, use closesocket function to close socket in Window
+	closesocket(offset_sock);
 
 	return 0;
+
 }
 
 int main(int argc, char* argv[]) {
@@ -178,7 +272,7 @@ int main(int argc, char* argv[]) {
 		err("WSAStartup()");
 	}
 
-	printf("TCP : 0 (default), UDP : 1\n\nport, protocol\n\n");
+	printf("UDP : 0 (default), TCP : 1\n\nport, protocol\n\n");
 
 	/* filename port */
 
@@ -198,10 +292,10 @@ int main(int argc, char* argv[]) {
 	}
 
 	if (protocol == 0)
-		TCP_server(&server_addr);
+		UDP_server(&server_addr);
 
 	else
-		UDP_server(&server_addr);
+		TCP_server(&server_addr);
 
 	WSACleanup(); // when winsock is closed, WSACleanup should be called
 

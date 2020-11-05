@@ -22,6 +22,7 @@
 
 #define SERVER "192.168.0.160" // test server
 #define PORT 5005              // default port
+#define OFFSET_PORT_UDP 5006   // udp offset thread socket port
 
 #define ITERATION 10
 #define MEDIUM_TERM_SEC 0
@@ -317,6 +318,9 @@ void mode_3(int sock, struct sockaddr_in *server_addr, int protocol){
 
     int32_t offset[2] = { 0, };
 
+    if(protocol == 0) // if udp
+        server_addr->sin_port = htons(OFFSET_PORT_UDP); // udp offset thread socket port
+
     offset_calculated(sock, offset, server_addr, protocol);
 
     // delay reward
@@ -334,7 +338,7 @@ void mode_3(int sock, struct sockaddr_in *server_addr, int protocol){
     drone_ms = T_present.tv_nsec / 1000000;
 
     server_ms = T_.tv_nsec / 1000000;
-
+    /*
     // Server Time
     if(server_ms < 100){
         if(server_date->tm_hour < 10)
@@ -364,6 +368,9 @@ void mode_3(int sock, struct sockaddr_in *server_addr, int protocol){
     
     // Offset
     printf("%d+", (offset[0] * 1000) + (offset[1] / 1000000)); // ms
+    */
+
+    printf("%d", (offset[0] * 1000) + (offset[1] / 1000000)); // ms
 }
 
 int TCP_socket(struct sockaddr_in *server_addr, int mode, int protocol){
@@ -478,7 +485,7 @@ int main(int argc, char *argv[]){
 
     if(argc >= 4) server_addr.sin_port = htons(atoi(argv[3]));
 
-    if(argc >= 5 && atoi(argv[4]) == 1) protocol = 1; // default 0 : TCP
+    if(argc >= 5 && atoi(argv[4]) == 1) protocol = 1; // default 0 : UDP
 
     if(argc == 6) thr = atoi(argv[5]) * 1000000; // threshold default 5,000,000 ns // input ms
 

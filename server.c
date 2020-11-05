@@ -24,6 +24,12 @@
 
 #define PORT 5005 // default port
 
+#define OFFSET_PORT_UDP 5006
+
+#define UDP_OFFSET_THREAD 1 // 쓰래드 수
+
+#define UDP_SYNC_THREAD 1 // 쓰래드 수
+
 int Thread_t = 0; // total thread number played
 
 static void err(const char *error){
@@ -87,7 +93,7 @@ void *Server_Socket_Thread(void *arg){
 
         T_int[0] = T[0].tv_sec; T_int[1] = T[0].tv_nsec;
 
-        nanosleep(&s, NULL);
+        //nanosleep(&s, NULL);
 
         clock_gettime(CLOCK_REALTIME, &T[1]);
 
@@ -102,6 +108,96 @@ void *Server_Socket_Thread(void *arg){
     Thread_t--; // Thread crash caution
 
     close(sock);
+}
+
+void *UDP_OFFSET_Thread(void *arg){
+
+    int sock = (int *)arg;
+
+    struct msghdr msg;
+    struct sockaddr_in from_addr;
+
+    /* printpacket */
+    struct cmsghdr *cm;
+
+    struct timespec T[2];
+
+    int32_t T_int[4]; // for compatiblility between 32bit and 64bit
+
+    struct timespec s; // time_t (long) sec long nsec
+
+    s.tv_sec = MEDIUM_TERM_SEC; s.tv_nsec = MEDIUM_TERM_NSEC;
+
+    while(recv_socket(sock, &msg, &from_addr) > 0){
+
+        printf("Client IP : %s Port : %d\n", inet_ntoa(from_addr.sin_addr), ntohs(from_addr.sin_port));
+
+        clock_gettime(CLOCK_REALTIME, &T[0]);
+
+        for (cm = CMSG_FIRSTHDR(&msg); cm; cm = CMSG_NXTHDR(&msg, cm))
+                if (SOL_SOCKET == cm->cmsg_level && SO_TIMESTAMPNS == cm->cmsg_type)
+                    memcpy(&T[0], (struct timespec *)CMSG_DATA(cm), sizeof(struct timespec));
+
+        T_int[0] = T[0].tv_sec; T_int[1] = T[0].tv_nsec;
+
+        //nanosleep(&s, NULL);
+
+        clock_gettime(CLOCK_REALTIME, &T[1]);
+
+        T_int[2] = T[1].tv_sec; T_int[3] = T[1].tv_nsec;
+
+        sendto(sock, T_int, sizeof(T_int), 0, (struct sockaddr*)&from_addr, sizeof(from_addr));
+
+        printf("\nT2: %ld.%ld\nT3: %ld.%ld\n\n", T[0].tv_sec, T[0].tv_nsec, T[1].tv_sec, T[1].tv_nsec); // time_t (long) : %ld long: %ld
+
+    }
+
+}
+
+void *UDP_SYNC_Thread(void *arg){
+    
+    int sock = (int *)arg;
+
+    struct msghdr msg;
+    struct sockaddr_in from_addr;
+
+    /* printpacket */
+    struct cmsghdr *cm;
+
+    struct timespec T[2];
+
+    int32_t T_int[4]; // for compatiblility between 32bit and 64bit
+
+    struct timespec s; // time_t (long) sec long nsec
+
+    s.tv_sec = MEDIUM_TERM_SEC; s.tv_nsec = MEDIUM_TERM_NSEC;
+
+    while(recv_socket(sock, &msg, &from_addr) > 0){
+
+        printf("Client IP : %s Port : %d\n", inet_ntoa(from_addr.sin_addr), ntohs(from_addr.sin_port));
+
+        clock_gettime(CLOCK_REALTIME, &T[0]);
+
+        for (cm = CMSG_FIRSTHDR(&msg); cm; cm = CMSG_NXTHDR(&msg, cm))
+                if (SOL_SOCKET == cm->cmsg_level && SO_TIMESTAMPNS == cm->cmsg_type)
+                    memcpy(&T[0], (struct timespec *)CMSG_DATA(cm), sizeof(struct timespec));
+
+        T_int[0] = T[0].tv_sec; T_int[1] = T[0].tv_nsec;
+
+        //nanosleep(&s, NULL);
+
+        clock_gettime(CLOCK_REALTIME, &T[1]);
+
+        T_int[2] = T[1].tv_sec; T_int[3] = T[1].tv_nsec;
+
+        sendto(sock, T_int, sizeof(T_int), 0, (struct sockaddr*)&from_addr, sizeof(from_addr));
+
+        printf("\nT2: %ld.%ld\nT3: %ld.%ld\n\n", T[0].tv_sec, T[0].tv_nsec, T[1].tv_sec, T[1].tv_nsec); // time_t (long) : %ld long: %ld
+
+    }
+
+    Thread_t--;
+
 }
 
 int TCP_server(struct sockaddr_in *server_addr){
@@ -149,24 +245,25 @@ int TCP_server(struct sockaddr_in *server_addr){
 
 int UDP_server(struct sockaddr_in *server_addr){
 
-    struct msghdr msg;
-    struct sockaddr_in from_addr;
+    struct sockaddr_in offset_server_addr;
 
-    /* printpacket */
-    struct cmsghdr *cm;
+    memset(&offset_server_addr, '\0', sizeof(offset_server_addr));
 
-    struct timespec T[2];
+    offset_server_addr.sin_family = AF_INET;
+    offset_server_addr.sin_addr.s_addr = htonl(INADDR_ANY);
+    offset_server_addr.sin_port = htons(OFFSET_PORT_UDP);
 
-    int32_t T_int[4]; // for compatiblility between 32bit and 64bit
+    int i, sock, offset_sock, enabled = 1;
 
-    struct timespec s; // time_t (long) sec long nsec
-
-    s.tv_sec = MEDIUM_TERM_SEC; s.tv_nsec = MEDIUM_TERM_NSEC;
-
-    int sock, enabled = 1;
+    Thread_t = UDP_SYNC_THREAD;
 
     if((sock = socket(AF_INET, SOCK_DGRAM, 0)) == -1){
         printf("UDP socket() failed\n");
+        exit(1);
+    }
+
+    if((offset_sock = socket(AF_INET, SOCK_DGRAM, 0)) == -1){
+        printf("UDP offset_socket() failed\n");
         exit(1);
     }
 
@@ -175,36 +272,31 @@ int UDP_server(struct sockaddr_in *server_addr){
     if(setsockopt(sock, SOL_SOCKET, SO_TIMESTAMPNS, &enabled, sizeof(enabled)) < 0)
         err("setsockopt()");
 
+    if(setsockopt(offset_sock, SOL_SOCKET, SO_TIMESTAMPNS, &enabled, sizeof(enabled)) < 0)
+        err("offset_setsockopt()");
+
     if(bind(sock, (struct sockaddr*)server_addr, sizeof(*server_addr)) < 0)
         err("bind()");
+    
+    if(bind(offset_sock, (struct sockaddr*)server_addr, sizeof(*server_addr)) < 0)
+        err("offset_bind()");
 
     printf("bind() success\n\n");
 
-    while(recv_socket(sock, &msg, &from_addr) > 0){
-
-        printf("Client IP : %s Port : %d\n", inet_ntoa(from_addr.sin_addr), ntohs(from_addr.sin_port));
-
-        clock_gettime(CLOCK_REALTIME, &T[0]);
-
-        for (cm = CMSG_FIRSTHDR(&msg); cm; cm = CMSG_NXTHDR(&msg, cm))
-                if (SOL_SOCKET == cm->cmsg_level && SO_TIMESTAMPNS == cm->cmsg_type)
-                    memcpy(&T[0], (struct timespec *)CMSG_DATA(cm), sizeof(struct timespec));
-
-        T_int[0] = T[0].tv_sec; T_int[1] = T[0].tv_nsec;
-
-        nanosleep(&s, NULL);
-
-        clock_gettime(CLOCK_REALTIME, &T[1]);
-
-        T_int[2] = T[1].tv_sec; T_int[3] = T[1].tv_nsec;
-
-        sendto(sock, T_int, sizeof(T_int), 0, (struct sockaddr*)&from_addr, sizeof(from_addr));
-
-        printf("\nT2: %ld.%ld\nT3: %ld.%ld\n\n", T[0].tv_sec, T[0].tv_nsec, T[1].tv_sec, T[1].tv_nsec); // time_t (long) : %ld long: %ld
-
+    for(i = 0; i < UDP_OFFSET_THREAD; i++){
+        if(pthread_create(&p_thread[0], NULL, UDP_OFFSET_Thread, (void *)offset_sock) != 0)
+            err("thread error");
     }
 
+    for(i = 0; i < UDP_SYNC_THREAD; i++){
+        if(pthread_create(&p_thread[0], NULL, UDP_SYNC_Thread, (void *)sock) != 0)
+            err("thread error");
+    }
+    
+    while(Thread_t != 0);
+
     close(sock);
+    close(offset_sock);
 
     return 0;
 }
