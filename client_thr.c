@@ -251,7 +251,7 @@ void mode_1(int sock, struct sockaddr_in *server_addr, int protocol){
         }
 
         else if(offset[1] < BOUNDARY && offset[1] > BOUNDARY_){
-            printf("\nsuccess : %d ns\n\n", offset[1]);
+            //printf("\nsuccess : %d ns\n\n", offset[1]);
             break;
         }
 
@@ -318,8 +318,8 @@ void mode_3(int sock, struct sockaddr_in *server_addr, int protocol){
 
     int32_t offset[2] = { 0, };
 
-    if(protocol == 0) // if udp
-        server_addr->sin_port = htons(OFFSET_PORT_UDP); // udp offset thread socket port
+//    if(protocol == 0) // if udp
+//        server_addr->sin_port = htons(OFFSET_PORT_UDP); // udp offset thread socket port
 
     offset_calculated(sock, offset, server_addr, protocol);
 
@@ -338,7 +338,7 @@ void mode_3(int sock, struct sockaddr_in *server_addr, int protocol){
     drone_ms = T_present.tv_nsec / 1000000;
 
     server_ms = T_.tv_nsec / 1000000;
-    /*
+    
     // Server Time
     if(server_ms < 100){
         if(server_date->tm_hour < 10)
@@ -368,9 +368,7 @@ void mode_3(int sock, struct sockaddr_in *server_addr, int protocol){
     
     // Offset
     printf("%d+", (offset[0] * 1000) + (offset[1] / 1000000)); // ms
-    */
-
-    printf("%d", (offset[0] * 1000) + (offset[1] / 1000000)); // ms
+    
 }
 
 int TCP_socket(struct sockaddr_in *server_addr, int mode, int protocol){

@@ -202,7 +202,7 @@ void *UDP_SYNC_Thread(void *arg){
 
 int TCP_server(struct sockaddr_in *server_addr){
 
-    pthread_t p_thread[BACKLOG]; // thread identifier
+    pthread_t p_thread; // thread identifier
 
     struct sockaddr_in client_addr;
 
@@ -233,8 +233,13 @@ int TCP_server(struct sockaddr_in *server_addr){
     printf("listen() success\n");
 
     while((new = accept(sock, (struct sockaddr*)&client_addr, &client_len)) != -1){
+        
         if(Thread_t < 0) Thread_t = 0; // additional consideration is demanded
-        if(pthread_create(&p_thread[0], NULL, Server_Socket_Thread, (void *)new) == 0) Thread_t++; // thread success return 0 pthread overlap is ok but index -1 is not ok
+
+        if(pthread_create(&p_thread, NULL, Server_Socket_Thread, (void *)new) == 0) Thread_t++; // thread success return 0 pthread overlap is ok but index -1 is not ok
+
+        pthread_detach(p_thread); // 자원 반납
+
         printf("%d : Client IP : %s Port : %d\n", Thread_t, inet_ntoa(client_addr.sin_addr), ntohs(client_addr.sin_port));
     }
 
@@ -245,7 +250,7 @@ int TCP_server(struct sockaddr_in *server_addr){
 
 int UDP_server(struct sockaddr_in *server_addr){
 
-    pthread_t p_thread[BACKLOG]; // thread identifier
+    pthread_t p_thread; // thread identifier
 
     struct sockaddr_in offset_server_addr;
 
@@ -286,13 +291,15 @@ int UDP_server(struct sockaddr_in *server_addr){
     printf("bind() success\n\n");
 
     for(i = 0; i < UDP_OFFSET_THREAD; i++){
-        if(pthread_create(&p_thread[0], NULL, UDP_OFFSET_Thread, (void *)offset_sock) != 0)
+        if(pthread_create(&p_thread, NULL, UDP_OFFSET_Thread, (void *)offset_sock) != 0)
             err("thread error");
+        pthread_detach(p_thread); // 자원 반납
     }
 
     for(i = 0; i < UDP_SYNC_THREAD; i++){
-        if(pthread_create(&p_thread[0], NULL, UDP_SYNC_Thread, (void *)sock) != 0)
+        if(pthread_create(&p_thread, NULL, UDP_SYNC_Thread, (void *)sock) != 0)
             err("thread error");
+        pthread_detach(p_thread); // 자원 반납
     }
     
     while(Thread_t != 0);
