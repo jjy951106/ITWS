@@ -30,10 +30,10 @@
 
 /* requirement : 5ms */
 
-#define BOUNDARY 1000000 // plus(ns)
-#define BOUNDARY_ -1000000 // minus(ns)
+#define BOUNDARY 5000000 // plus(ns)
+#define BOUNDARY_ -5000000 // minus(ns)
 
-int32_t DEVIATION = 10000000; // ns
+int32_t DEVIATION = 50000000; // ns
 
 struct timespec T_, T_present;
 
