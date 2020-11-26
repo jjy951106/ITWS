@@ -318,8 +318,10 @@ void mode_3(int sock, struct sockaddr_in *server_addr, int protocol){
 
     int32_t offset[2] = { 0, };
 
-//    if(protocol == 0) // if udp
-//        server_addr->sin_port = htons(OFFSET_PORT_UDP); // udp offset thread socket port
+    /*
+    if(protocol == 0) // if udp
+        server_addr->sin_port = htons(OFFSET_PORT_UDP); // udp offset thread socket port
+    */
 
     offset_calculated(sock, offset, server_addr, protocol);
 
@@ -328,9 +330,16 @@ void mode_3(int sock, struct sockaddr_in *server_addr, int protocol){
     T_.tv_sec += delay[0];
 
     T_.tv_nsec += delay[1];
+    
+    printf("%d.%d+", T_.tv_sec, T_.tv_nsec / 1000);
 
-    const time_t t1 = T_present.tv_sec;
-    const time_t t2 = T_.tv_sec;
+    printf("%d.%d+", T_present.tv_sec, T_present.tv_nsec / 1000);
+
+    // Server Time
+    /*
+    
+    const time_t t1 = T_present.tv_sec;  // T4
+    const time_t t2 = T_.tv_sec;  // T3
 
     drone_date = localtime(&t1);
     server_date = localtime(&t2);
@@ -338,8 +347,7 @@ void mode_3(int sock, struct sockaddr_in *server_addr, int protocol){
     drone_ms = T_present.tv_nsec / 1000000;
 
     server_ms = T_.tv_nsec / 1000000;
-    
-    // Server Time
+
     if(server_ms < 100){
         if(server_date->tm_hour < 10)
             printf("%d%d%dT0%d%d%d0%d+", server_date->tm_year + 1900 , server_date->tm_mon + 1 , server_date->tm_mday , server_date->tm_hour , server_date->tm_min , server_date->tm_sec, server_ms);
@@ -365,7 +373,8 @@ void mode_3(int sock, struct sockaddr_in *server_addr, int protocol){
         else
             printf("%d%d%dT%d%d%d%d+", drone_date->tm_year + 1900 , drone_date->tm_mon + 1 , drone_date->tm_mday , drone_date->tm_hour , drone_date->tm_min , drone_date->tm_sec, drone_ms);
     }
-    
+    */
+
     // Offset
     printf("%d+", (offset[0] * 1000) + (offset[1] / 1000000)); // ms
     
