@@ -331,9 +331,28 @@ void mode_3(int sock, struct sockaddr_in *server_addr, int protocol){
 
     T_.tv_nsec += delay[1];
     
-    printf("%d.%d+", T_.tv_sec, T_.tv_nsec / 1000);
+    if(T_.tv_nsec < 0){
+        T_.tv_sec -= 1;
+        T_.tv_nsec = 1000000000 - T.tv_nsec;
+    }
 
-    printf("%d.%d+", T_present.tv_sec, T_present.tv_nsec / 1000);
+    if(T_.tv_nsec >= 100000000)
+        printf("%d.%d+", T_.tv_sec, T_.tv_nsec / 1000);
+
+    else if(T_.tv_nsec >= 10000000)
+        printf("%d.0%d+", T_.tv_sec, T_.tv_nsec / 1000);
+
+    else if(T_.tv_nsec >= 1000000)
+        printf("%d.00%d+", T_.tv_sec, T_.tv_nsec / 1000);
+
+    if(T_present.tv_nsec >= 100000000)
+        printf("%d.%d+", T_present.tv_sec, T_present.tv_nsec / 1000);
+
+    else if(T_present.tv_nsec >= 10000000)
+        printf("%d.0%d+", T_present.tv_sec, T_present.tv_nsec / 1000);
+
+    else if(T_present.tv_nsec >= 1000000)
+        printf("%d.00%d+", T_present.tv_sec, T_present.tv_nsec / 1000);
 
     // Server Time
     /*
