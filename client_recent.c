@@ -22,7 +22,6 @@
 
 #define SERVER "192.168.0.160" // test server
 #define PORT 5005              // default port
-#define OFFSET_PORT_UDP 5006   // udp offset thread socket port
 
 #define ITERATION 10
 #define MEDIUM_TERM_SEC 0

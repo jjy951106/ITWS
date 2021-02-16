@@ -27,6 +27,8 @@ struct timespec s = { MEDIUM_TERM_SEC, MEDIUM_TERM_NSEC }; // time_t (long) sec 
 
 #define PORT 5005 // default port
 
+#define FC_COMPS_PORT_UDP 5006
+
 int Thread_t = 0; // total thread number played
 
 int Compenstate_FC_MC = 0; // Offset between FC and MC 
@@ -150,6 +152,24 @@ void *UDP_Thread(void *args){
 
 }
 
+void *UDP_FC_COMPS_Thread(void *arg){
+
+    int sock = (int *)arg;
+
+    struct sockaddr_in client_addr;
+
+    int len = sizeof(client_addr);
+
+    char buf[256];
+
+    while(recvfrom(sock, buf, sizeof(buf), 0, (struct sockaddr*)&client_addr, &len) > 0){
+
+    }
+
+    return 0;
+
+}
+
 int TCP_server(struct sockaddr_in *server_addr){
 
     pthread_t p_thread; // thread identifier
@@ -203,9 +223,22 @@ int UDP_server(struct sockaddr_in *server_addr){
 
     pthread_t p_thread; // thread identifier
 
-    int sock, enabled = 1;
+    int fc_comps_sock, enabled = 1;
+
+    struct sockaddr_in fc_comps_server_addr;
+
+    memset(&fc_comps_server_addr, '\0', sizeof(fc_comps_server_addr));
+
+    fc_comps_server_addr.sin_family = AF_INET;
+    fc_comps_server_addr.sin_addr.s_addr = htonl(INADDR_ANY);
+    fc_comps_server_addr.sin_port = htons(FC_COMPS_PORT_UDP);
 
     if((utf.sock = socket(AF_INET, SOCK_DGRAM, 0)) == -1){
+        printf("UDP socket() failed\n");
+        exit(1);
+    }
+
+    if((fc_comps_sock = socket(AF_INET, SOCK_DGRAM, 0)) == -1){
         printf("UDP socket() failed\n");
         exit(1);
     }
@@ -218,7 +251,18 @@ int UDP_server(struct sockaddr_in *server_addr){
     if(bind(utf.sock, (struct sockaddr*)server_addr, sizeof(*server_addr)) < 0)
         err("bind()");
 
+    if(setsockopt(fc_comps_sock, SOL_SOCKET, SO_TIMESTAMPNS, &enabled, sizeof(enabled)) < 0)
+        err("fc_comps_setsockopt()");
+
+    if(bind(fc_comps_sock, (struct sockaddr*)&fc_comps_server_addr, sizeof(fc_comps_server_addr)) < 0)
+        err("fc_comps_bind()");
+
     printf("bind() success\n\n");
+
+    if(pthread_create(&p_thread, NULL, UDP_FC_COMPS_Thread, (void *)fc_comps_sock) != 0)
+            err("thread error");
+    
+    pthread_detach(p_thread); // 자원 반납
 
     while(recv_socket(utf.sock, &utf.msg, &utf.from_addr) > 0){
 

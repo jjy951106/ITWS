@@ -1,13 +1,20 @@
 #include <stdio.h>
-#include <stdlib.h>
+#include <stdlib.h> // exit(0) 'normal' exit(1) 'error'
 #include <string.h>
+#include <stdint.h> // int32_t int64_t
 
+#include <time.h>
 #include <sys/time.h>
 #include <sys/socket.h>
 #include <sys/types.h>
 
+#include <pthread.h>
+#include <unistd.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+
+#include <errno.h>
+#include "linux/errqueue.h"
 
 #define PORT 5005
 
@@ -18,8 +25,6 @@ int main(int argc, char *argv[]){
     int n = 0;
 
     struct sockaddr_in server_addr, client_addr;
-
-    struct timeval T2, T3;
 
     int len = sizeof(client_addr);
 
@@ -34,25 +39,19 @@ int main(int argc, char *argv[]){
     server_addr.sin_addr.s_addr = htonl(INADDR_ANY);
     server_addr.sin_port = htons(PORT);
 
-    if(argc == 2)
-        server_addr.sin_port = htons(atoi(argv[1]));
-
     if(bind(sock, (struct sockaddr*)&server_addr, sizeof(server_addr)) == -1){
         printf("bind error!\n");
         exit(1);
     }
 
-    while(1){ //gettimeofday가 더 정확할 수도 있는 점을 참고
-        if(recvfrom(sock, buf, sizeof(buf), 0, (struct sockaddr*)&client_addr, &len) > 0){
-            error = ioctl(sock, SIOCGSTAMP, &T2);
-            n++;
-        }
+    while(recvfrom(sock, buf, sizeof(buf), 0, (struct sockaddr*)&client_addr, &len) > 0){
 
-        gettimeofday(&T3, 0);
-        sprintf(buf ,"%d %d %d %d", T2.tv_sec, T2.tv_usec, T3.tv_sec, T3.tv_usec);
-        sendto(sock, buf, strlen(buf) + 1, 0, (struct sockaddr*)&client_addr, sizeof(client_addr));
+        printf("%d : %s\n", n++, buf);
 
-        printf("%d\nT2: %d.%d\nT3: %d.%d\n\n", n, T2.tv_sec, T2.tv_usec, T3.tv_sec, T3.tv_usec);
+        print("%d\n", atoi(buf))
+
+        memset(buf, '\0', sizeof(buf));
+
     }
 
     close(sock);
