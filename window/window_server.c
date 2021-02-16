@@ -274,7 +274,7 @@ int main(int argc, char* argv[]) {
 
 	printf("UDP : 0 (default), TCP : 1\n\nport, protocol\n\n");
 
-	/* filename port */
+	/* filename port *
 
 	memset(&server_addr, 0, sizeof(server_addr));
 
