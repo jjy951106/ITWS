@@ -31,7 +31,11 @@ struct timespec s = { MEDIUM_TERM_SEC, MEDIUM_TERM_NSEC }; // time_t (long) sec 
 
 int Thread_t = 0; // total thread number played
 
-int Compenstate_FC_MC = 0; // Offset between FC and MC 
+double Compenstate_FC_MC = 0; // Offset between FC and MC 
+
+double Compenstate_FC_MC_sync = 0;
+
+int chage_comps = 0;
 
 typedef struct udp_thread_factor{
     
@@ -96,13 +100,15 @@ void *Server_Socket_Thread(void *arg){
                 if (SOL_SOCKET == cm->cmsg_level && SO_TIMESTAMPNS == cm->cmsg_type)
                     memcpy(&T[0], (struct timespec *)CMSG_DATA(cm), sizeof(struct timespec));
 
-        T_int[0] = T[0].tv_sec; T_int[1] = T[0].tv_nsec;
-
+        T_int[0] = T[0].tv_sec + (Compenstate_FC_MC / 1000); 
+        T_int[1] = T[0].tv_nsec + ((Compenstate_FC_MC - (Compenstate_FC_MC / 1000)) * 1000000);
+        
         nanosleep(&s, NULL);
 
         clock_gettime(CLOCK_REALTIME, &T[1]);
 
-        T_int[2] = T[1].tv_sec; T_int[3] = T[1].tv_nsec;
+        T_int[2] = T[1].tv_sec + (Compenstate_FC_MC / 1000); 
+        T_int[3] = T[1].tv_nsec + ((Compenstate_FC_MC - (Compenstate_FC_MC / 1000)) * 1000000);
 
         send(sock, T_int, sizeof(T_int), 0);
 
@@ -136,17 +142,21 @@ void *UDP_Thread(void *args){
             if (SOL_SOCKET == cm->cmsg_level && SO_TIMESTAMPNS == cm->cmsg_type)
                 memcpy(&T[0], (struct timespec *)CMSG_DATA(cm), sizeof(struct timespec));
 
-    T_int[0] = T[0].tv_sec; T_int[1] = T[0].tv_nsec;
+    T_int[0] = T[0].tv_sec + (int)(Compenstate_FC_MC / 1000); 
+    T_int[1] = T[0].tv_nsec + (int)((Compenstate_FC_MC - (int)(Compenstate_FC_MC / 1000)) * 1000000);
 
     nanosleep(&s, NULL);
 
     clock_gettime(CLOCK_REALTIME, &T[1]);
 
-    T_int[2] = T[1].tv_sec; T_int[3] = T[1].tv_nsec;
+    T_int[2] = T[1].tv_sec + (int)(Compenstate_FC_MC / 1000);
+    T_int[3] = T[1].tv_nsec + (int)((Compenstate_FC_MC - (int)(Compenstate_FC_MC / 1000)) * 1000000);
 
     sendto(utf.sock, T_int, sizeof(T_int), 0, (struct sockaddr*)&utf.from_addr, sizeof(utf.from_addr));
 
     printf("\nT2: %ld.%ld\nT3: %ld.%ld\n\n", T[0].tv_sec, T[0].tv_nsec, T[1].tv_sec, T[1].tv_nsec); // time_t (long) : %ld long: %ld
+
+    printf("Compenstate_FC_MC : %lfms, %ds, %dns\n", Compenstate_FC_MC, (int)(Compenstate_FC_MC / 1000), (int)((Compenstate_FC_MC - (int)(Compenstate_FC_MC / 1000)) * 1000000));
 
     return 0;
 
@@ -158,13 +168,59 @@ void *UDP_FC_COMPS_Thread(void *arg){
 
     struct sockaddr_in client_addr;
 
-    int len = sizeof(client_addr);
+    int len = sizeof(client_addr), count = 0, i;
+    
+    int32_t temp[2];
+
+    int *fc_comps_buf=(int *)malloc(sizeof(int) * 15); //동적할당
+
+    int count_bound = 10;
 
     char buf[256];
 
     while(recvfrom(sock, buf, sizeof(buf), 0, (struct sockaddr*)&client_addr, &len) > 0){
 
+        printf("%d : %d\n", count, atoi(buf));
+
+        fc_comps_buf[count] = atoi(buf);
+
+        count++;
+
+        memset(buf, '\0', sizeof(buf));
+
+        if(count > count_bound - 1){
+
+            chage_comps = 1;
+
+            for(i = 1; i < count_bound; i++){
+                temp[0] = fc_comps_buf[0]; // max
+                temp[1] = fc_comps_buf[0]; // min
+
+                if(fc_comps_buf[i] > temp[0])
+                    temp[0] = fc_comps_buf[i];
+
+                if(fc_comps_buf[i] < temp[1])
+                    temp[1] = fc_comps_buf[i];
+            }
+
+            if((temp[0] + temp[1]) / 2.0 > 5)
+                Compenstate_FC_MC = (temp[0] + temp[1]) / 2.0;
+
+            printf("max : %d, min : %d\nCompenstate_FC_MC : %lf\n", temp[0], temp[1], Compenstate_FC_MC);
+
+            memset(fc_comps_buf, '\0', sizeof(fc_comps_buf));
+
+            count = 0;
+
+        }
+
+        chage_comps = 0;
+
     }
+
+    free(fc_comps_buf);
+
+    close(sock);
 
     return 0;
 
@@ -271,8 +327,6 @@ int UDP_server(struct sockaddr_in *server_addr){
             
         pthread_detach(p_thread);  // 자원 반납
     }
-
-    close(sock);
 
     return 0;
 }
