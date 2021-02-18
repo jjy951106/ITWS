@@ -195,6 +195,11 @@ void iterative_offset_calculated(int sock, int32_t *offset, struct sockaddr_in *
 
         offset_calculated(sock, temp, server_addr, protocol);
 
+        if(temp[0] > 5){ // or 10
+            initialized_T(sock, server_addr, protocol);
+            return 0;
+        }
+
         /* DEVIATION */
         if(abs(temp[0]) < 1 && abs(temp[1]) <= DEVIATION){
             offset[0] += temp[0];
