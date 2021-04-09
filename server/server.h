@@ -18,3 +18,13 @@
 
 #include <errno.h>
 #include "linux/errqueue.h"
+
+
+#define BACKLOG 100
+
+#define MEDIUM_TERM_SEC 0
+#define MEDIUM_TERM_NSEC 10000000 // nanosecond between receive and transmit
+
+#define PORT 5005 // default port
+
+#define FC_COMPS_PORT_UDP 5006
