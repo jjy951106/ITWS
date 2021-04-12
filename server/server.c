@@ -10,7 +10,7 @@ double Compenstate_FC_MC_sync = 0;
 
 int chage_comps = 0;
 
-int64_t _atoi(char *cdata){
+int64_t _atoi(char* cdata){
     int sign = 1;
     int64_t data = 0;
  
@@ -79,8 +79,6 @@ void *Server_Socket_Thread(void *arg){
 
     int32_t comps_sec;
     int32_t comps_nsec;
-
-    //sock = pth[0];
 
     while((close_ = recv_socket(sock, &msg, NULL)) != -1){
 
@@ -157,8 +155,8 @@ void *UDP_Thread(void *args){
     clock_gettime(CLOCK_REALTIME, &T[0]);
 
     for (cm = CMSG_FIRSTHDR(&utf.msg); cm; cm = CMSG_NXTHDR(&utf.msg, cm))
-            if (SOL_SOCKET == cm->cmsg_level && SO_TIMESTAMPNS == cm->cmsg_type)
-                memcpy(&T[0], (struct timespec *)CMSG_DATA(cm), sizeof(struct timespec));
+        if (SOL_SOCKET == cm->cmsg_level && SO_TIMESTAMPNS == cm->cmsg_type)
+            memcpy(&T[0], (struct timespec *)CMSG_DATA(cm), sizeof(struct timespec));
 
     T_int[0] = T[0].tv_sec + comps_sec; 
     T_int[1] = T[0].tv_nsec + comps_nsec;
@@ -304,9 +302,10 @@ int TCP_server(struct sockaddr_in *server_addr){
     printf("listen() success\n");
 
     while((new = accept(sock, (struct sockaddr*)&client_addr, &client_len)) != -1){
+
         if(Thread_t < 0) Thread_t = 0; // additional consideration is demanded
 
-        if(pthread_create(p_thread, NULL, Server_Socket_Thread, (void *)new) == 0) Thread_t++; // thread success return 0 pthread overlap is ok but index -1 is not ok
+        if(pthread_create(&p_thread, NULL, Server_Socket_Thread, (void *)new) == 0) Thread_t++; // thread success return 0 pthread overlap is ok but index -1 is not ok
 
         pthread_detach(p_thread); // 자원 반납
 
@@ -344,7 +343,7 @@ int UDP_server(struct sockaddr_in *server_addr){
         exit(1);
     }
 
-    printf("UDP socket() success\n");
+    printf("UDP socket() success\n ");
 
     if(setsockopt(utf.sock, SOL_SOCKET, SO_TIMESTAMPNS, &enabled, sizeof(enabled)) < 0)
         err("setsockopt()");

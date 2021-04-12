@@ -441,7 +441,7 @@ int TCP_socket(struct sockaddr_in *server_addr, int mode, int protocol){
     if((sock = socket(AF_INET, SOCK_STREAM, 0)) < 0)
         err("TCP socket()");
 
-    //printf("TCP socket() success\n");
+    printf("TCP socket() success\n");
 
     /* SO_TIMESTAMPNS */
 
@@ -454,7 +454,7 @@ int TCP_socket(struct sockaddr_in *server_addr, int mode, int protocol){
     if(connect(sock, (struct sockaddr*)server_addr, sizeof(*server_addr)) < 0)
         err("connect()");
 
-    //printf("conect() success\n\n");
+    printf("conect() success\n\n");
 
     select_mode(sock, mode, server_addr, protocol);
 
@@ -511,7 +511,7 @@ int UDP_socket(struct sockaddr_in *server_addr, int mode, int protocol){
 
 int main(int argc, char *argv[]){
 
-    int mode = 2 /*default mode 2*/, protocol = 0;;
+    int mode = 2 /*default mode 2*/, protocol = 0;
 
     struct sockaddr_in server_addr;
 

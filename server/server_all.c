@@ -24,19 +24,9 @@
 #define MEDIUM_TERM_SEC 0
 #define MEDIUM_TERM_NSEC 10000000 // nanosecond between receive and transmit
 
-struct timespec s = { MEDIUM_TERM_SEC, MEDIUM_TERM_NSEC }; // time_t (long) sec long nsec for sleep
-
 #define PORT 5005 // default port
 
 #define FC_COMPS_PORT_UDP 5006
-
-int Thread_t = 0; // total thread number played
-
-double Compenstate_FC_MC = 0; // Offset between FC and MC 
-
-double Compenstate_FC_MC_sync = 0;
-
-int chage_comps = 0;
 
 typedef struct udp_thread_factor{
 
@@ -45,6 +35,16 @@ typedef struct udp_thread_factor{
     struct sockaddr_in from_addr;
 
 }udp_thread_factor;
+
+struct timespec s = { MEDIUM_TERM_SEC, MEDIUM_TERM_NSEC }; // time_t (long) sec long nsec for sleep
+
+int Thread_t = 0; // total thread number played
+
+double Compenstate_FC_MC = 0; // Offset between FC and MC 
+
+double Compenstate_FC_MC_sync = 0;
+
+int chage_comps = 0;
 
 int64_t _atoi(char* cdata){
     int sign = 1;
@@ -115,8 +115,6 @@ void *Server_Socket_Thread(void *arg){
 
     int32_t comps_sec;
     int32_t comps_nsec;
-
-    //sock = pth[0];
 
     while((close_ = recv_socket(sock, &msg, NULL)) != -1){
 
@@ -193,8 +191,8 @@ void *UDP_Thread(void *args){
     clock_gettime(CLOCK_REALTIME, &T[0]);
 
     for (cm = CMSG_FIRSTHDR(&utf.msg); cm; cm = CMSG_NXTHDR(&utf.msg, cm))
-            if (SOL_SOCKET == cm->cmsg_level && SO_TIMESTAMPNS == cm->cmsg_type)
-                memcpy(&T[0], (struct timespec *)CMSG_DATA(cm), sizeof(struct timespec));
+        if (SOL_SOCKET == cm->cmsg_level && SO_TIMESTAMPNS == cm->cmsg_type)
+            memcpy(&T[0], (struct timespec *)CMSG_DATA(cm), sizeof(struct timespec));
 
     T_int[0] = T[0].tv_sec + comps_sec; 
     T_int[1] = T[0].tv_nsec + comps_nsec;
@@ -340,9 +338,10 @@ int TCP_server(struct sockaddr_in *server_addr){
     printf("listen() success\n");
 
     while((new = accept(sock, (struct sockaddr*)&client_addr, &client_len)) != -1){
+
         if(Thread_t < 0) Thread_t = 0; // additional consideration is demanded
 
-        if(pthread_create(p_thread, NULL, Server_Socket_Thread, (void *)new) == 0) Thread_t++; // thread success return 0 pthread overlap is ok but index -1 is not ok
+        if(pthread_create(&p_thread, NULL, Server_Socket_Thread, (void *)new) == 0) Thread_t++; // thread success return 0 pthread overlap is ok but index -1 is not ok
 
         pthread_detach(p_thread); // 자원 반납
 
@@ -376,20 +375,20 @@ int UDP_server(struct sockaddr_in *server_addr){
     }
 
     if((fc_comps_sock = socket(AF_INET, SOCK_DGRAM, 0)) == -1){
-        printf("UDP socket() failed\n");
+        printf("fc_comp_sock UDP socket() failed\n");
         exit(1);
     }
 
-    printf("UDP socket() success\n");
+    printf("UDP socket() success\n "); // 이 부분에서 끝에 띄어쓰기가 없으면 segmentation 오류 발생
 
     if(setsockopt(utf.sock, SOL_SOCKET, SO_TIMESTAMPNS, &enabled, sizeof(enabled)) < 0)
         err("setsockopt()");
 
-    if(bind(utf.sock, (struct sockaddr*)server_addr, sizeof(*server_addr)) < 0)
-        err("bind()");
-
     if(setsockopt(fc_comps_sock, SOL_SOCKET, SO_TIMESTAMPNS, &enabled, sizeof(enabled)) < 0)
         err("fc_comps_setsockopt()");
+
+    if(bind(utf.sock, (struct sockaddr*)server_addr, sizeof(*server_addr)) < 0)
+        err("bind()");
 
     if(bind(fc_comps_sock, (struct sockaddr*)&fc_comps_server_addr, sizeof(fc_comps_server_addr)) < 0)
         err("fc_comps_bind()");
@@ -398,7 +397,7 @@ int UDP_server(struct sockaddr_in *server_addr){
 
     if(pthread_create(&p_thread, NULL, UDP_FC_COMPS_Thread, (void *)fc_comps_sock) != 0)
             err("thread error");
-    
+
     pthread_detach(p_thread); // 자원 반납
 
     while(recv_socket(utf.sock, &utf.msg, &utf.from_addr) > 0){
