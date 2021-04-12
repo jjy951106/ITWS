@@ -19,7 +19,6 @@
 #include <errno.h>
 #include "linux/errqueue.h"
 
-
 #define BACKLOG 100
 
 #define MEDIUM_TERM_SEC 0
@@ -28,3 +27,27 @@
 #define PORT 5005 // default port
 
 #define FC_COMPS_PORT_UDP 5006
+
+typedef struct udp_thread_factor{
+
+    int sock;
+    struct msghdr msg;
+    struct sockaddr_in from_addr;
+
+}udp_thread_factor;
+
+int64_t _atoi(char *cdata);
+
+static void err(const char *error);
+
+int recv_socket(int sock, struct msghdr *msg, struct sockaddr_in *from_addr);
+
+void *Server_Socket_Thread(void *arg);
+
+void *UDP_Thread(void *args);
+
+void *UDP_FC_COMPS_Thread(void *arg);
+
+int TCP_server(struct sockaddr_in *server_addr);
+
+int UDP_server(struct sockaddr_in *server_addr);

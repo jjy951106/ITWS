@@ -10,15 +10,7 @@ double Compenstate_FC_MC_sync = 0;
 
 int chage_comps = 0;
 
-typedef struct udp_thread_factor{
-
-    int sock;
-    struct msghdr msg;
-    struct sockaddr_in from_addr;
-
-}udp_thread_factor;
-
-int64_t _atoi(char* cdata){
+int64_t _atoi(char *cdata){
     int sign = 1;
     int64_t data = 0;
  
