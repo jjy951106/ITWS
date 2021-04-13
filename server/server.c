@@ -251,7 +251,7 @@ void *UDP_FC_COMPS_Thread(void *arg){
                 /* need much consdiration */
                 Compenstate_FC_MC += tmp;
 
-            printf("max : %lld, min : %lld\nCompenstate_FC_MC : %lf\n", temp[0], temp[1], Compenstate_FC_MC);
+            printf("max : %lld, min : %lld\nCompenstate_FC_MC : %lf\n", max, min, Compenstate_FC_MC);
 
             memset(fc_comps_buf, '\0', sizeof(fc_comps_buf));
 
