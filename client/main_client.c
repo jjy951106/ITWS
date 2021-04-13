@@ -2,7 +2,7 @@
 
 int main(int argc, char *argv[]){
 
-    int mode = 2 /*default mode 2*/, protocol = 0;
+    int mode = 1 /*default mode 1*/, protocol = 0;
 
     int32_t thr = 5000000; // threshold default 5,000,000 ns
 

@@ -1,6 +1,7 @@
 {
     "files.associations": {
         "client.h": "c",
-        "time.h": "c"
+        "time.h": "c",
+        "string.h": "c"
     }
 }

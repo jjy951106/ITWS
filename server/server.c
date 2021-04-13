@@ -343,7 +343,7 @@ int UDP_server(struct sockaddr_in *server_addr){
         exit(1);
     }
 
-    printf("UDP socket() success\n ");
+    printf(" UDP socket() success\n ");
 
     if(setsockopt(utf.sock, SOL_SOCKET, SO_TIMESTAMPNS, &enabled, sizeof(enabled)) < 0)
         err("setsockopt()");

@@ -1,12 +1,12 @@
 #include "client.h"
 
-int32_t DEVIATION = 50000000; // ns
+int32_t DEVIATION = 50000000; /* initial DEVIATION is 50ms */
 
 struct timespec T_, T_present;
 
 int32_t delay[2] = { 0, };
 
-int32_t thr = 5000000; // threshold default 5,000,000 ns
+int32_t thr = 5000000; /* threshold default 5ms to use in mode_2 */
 
 static const unsigned char binary[] = {
     0x00, 0x01, 0x00, 0x01
@@ -70,8 +70,10 @@ void recv_socket(int sock, struct msghdr *msg, struct sockaddr_in *server_addr, 
     re = recvmsg(sock, msg, 0);
 
     while(re == -1){
+        /* T1 update */
         clock_gettime(CLOCK_REALTIME, T);
-        //printf("retransmission : %d.%d\n", T->tv_sec, T->tv_nsec);//
+  
+        /* retransmission */
         send_socket(sock, server_addr, protocol);
         re = recvmsg(sock, msg, 0);
     }
@@ -95,6 +97,7 @@ void initialized_T(int sock, struct sockaddr_in *server_addr, int protocol){
 
     T_int = (int32_t *)msg.msg_iov->iov_base;
 
+    /* T3 server send time */
     T.tv_sec = T_int[2]; T.tv_nsec = T_int[3];
 
     clock_settime(CLOCK_REALTIME, &T);
@@ -125,6 +128,7 @@ void offset_calculated(int sock, int *offset, struct sockaddr_in *server_addr, i
     T[1].tv_sec = T_int[0]; T[1].tv_nsec = T_int[1];
     T[2].tv_sec = T_int[2]; T[2].tv_nsec = T_int[3];
 
+    /* T3 is saved to use in mode_1 and mode_3 */
     memcpy(&T_, &T[2], sizeof(struct timespec));
 
     for (cm = CMSG_FIRSTHDR(&msg); cm; cm = CMSG_NXTHDR(&msg, cm))
@@ -133,17 +137,20 @@ void offset_calculated(int sock, int *offset, struct sockaddr_in *server_addr, i
             memcpy(&T[3], (struct timespec *)CMSG_DATA(cm), sizeof(struct timespec));
         }
 
+    /* T4 is saved to use in mode_3 */
     memcpy(&T_present, &T[3], sizeof(struct timespec));
 
-    /* T1 : T[0], T2 : T_int[0], T_int[1], T3 : T_int[2], T_int[3], T4 : T[1] */
+    /* T1 : T[0] client
+       T2 : T[1] server
+       T3 : T[2] server
+       T4 : T[3] client */
+
+    /* offset (+ or -) */
     offset[0] = ((T[1].tv_sec - T[0].tv_sec) - (T[3].tv_sec - T[2].tv_sec)) / 2;
 
     offset[1] = ((T[1].tv_nsec - T[0].tv_nsec) - (T[3].tv_nsec - T[2].tv_nsec)) / 2;
 
-    //printf("T[0] : %d.%d\n", T[0].tv_sec, T[0].tv_nsec);//
-    
-    // delay add
-
+    /* delay (+ or -) */
     delay[0] = ((T[1].tv_sec - T[0].tv_sec) + (T[3].tv_sec - T[2].tv_sec)) / 2;
 
     delay[1] = ((T[1].tv_nsec - T[0].tv_nsec) + (T[3].tv_nsec - T[2].tv_nsec)) / 2;
@@ -163,13 +170,14 @@ void iterative_offset_calculated(int sock, int32_t *offset, struct sockaddr_in *
 
         offset_calculated(sock, temp, server_addr, protocol);
 
-        if(temp[0] > 5){ // or 10
+        if(temp[0] > 5 /* second (5s or 10s) */){
             initialized_T(sock, server_addr, protocol);
             return 0;
         }
 
         /* DEVIATION */
-        if(abs(temp[0]) < 1 && abs(temp[1]) <= DEVIATION){
+        if(abs(temp[0]) < 1 /* must be less than 1 second */ && abs(temp[1]) <= DEVIATION /* |ns| < DEVIATION */){
+            /* accumulated offset */
             offset[0] += temp[0];
             offset[1] += temp[1];
             iteration++;
@@ -177,23 +185,24 @@ void iterative_offset_calculated(int sock, int32_t *offset, struct sockaddr_in *
 
         nanosleep(&s, NULL);
     }
-
     //printf("iteration : %d \n", iteration);
 
-    if(iteration >= 3){ // the minimum number of iterations that within the deviation is more than 5 in total 10
+    /* minimum of iterations within adatative deviations is more than 5 in total 10 */
+    if(iteration >= 3){ 
         offset[0] /= iteration;
         offset[1] /= iteration;
     }
 
-    /* DEVIATION INCREASING */
+    /* DEVIATION increasing and not sync */
     else{
-        DEVIATION += 10000000;
+        DEVIATION += 10000000; /* 10ms */
         offset[0] = 0;
         offset[1] = 0;
     }
 
-    if(iteration >= 7 && iteration <= ITERATION) // increase accuracy
-        DEVIATION -= 5000000;
+    /* DEVIATION decreasing to increase accuracy */
+    if(iteration >= 7 && iteration <= ITERATION) 
+        DEVIATION -= 5000000;  /* 5ms */
 }
 
 void mode_1(int sock, struct sockaddr_in *server_addr, int protocol){
@@ -202,6 +211,7 @@ void mode_1(int sock, struct sockaddr_in *server_addr, int protocol){
 
     struct timespec C; // C (current)
 
+    /* outer offset initialization algorithm */
     initialized_T(sock, server_addr, protocol);
 
     while(1){
@@ -211,31 +221,34 @@ void mode_1(int sock, struct sockaddr_in *server_addr, int protocol){
 
         iterative_offset_calculated(sock, offset, server_addr, protocol);
 
-        //printf("offset : %d.%d\n", offset[0], offset[1]);
-
-        if(offset[0] == 0 && offset[1] == 0) // Not enough samples
+        /* Not enough samples */
+        if(offset[0] == 0 && offset[1] == 0)  
             continue;
 
+        /* inner offset initialization algorithm */
         else if(abs(offset[0]) > 0){
             clock_settime(CLOCK_REALTIME, &T_);
             sleep(1);
             continue;
         }
 
-        else if(offset[1] < BOUNDARY && offset[1] > BOUNDARY_){
-            //printf("\nsuccess : %d ns\n\n", offset[1]);
+        /* SUCCESS */
+        else if(offset[1] < BOUNDARY && offset[1] > BOUNDARY_) 
             break;
-        }
 
         /* offset compensation */
-
         clock_gettime(CLOCK_REALTIME, &C);
 
-        if((tmp = C.tv_nsec + offset[1]) >= 1000000000){
+        tmp = C.tv_nsec + offset[1];
+
+        if(tmp >= 1000000000){
             C.tv_sec += 1;
             C.tv_nsec = tmp - 1000000000;
         }
-
+        else if(tmp < 0){
+            C.tv_sec -= 1;
+            C.tv_nsec = tmp + 1000000000;
+        }
         else
             C.tv_nsec = tmp;
 
@@ -262,8 +275,6 @@ void mode_2(int sock, struct sockaddr_in *server_addr, int protocol){
 
         offset_calculated(sock, offset, server_addr, protocol);
 
-        //printf("offset : %ds %dns\n", offset[0], offset[1]);
-
         sleep(offset_interval);
 
         if(abs(offset[0]) > 1 || abs(offset[1]) > thr) offset_check++;
@@ -288,25 +299,28 @@ void mode_3(int sock, struct sockaddr_in *server_addr, int protocol){
 
     int drone_ms, server_ms;
 
-    int32_t offset[2] = { 0, };
-
-    /*
-    if(protocol == 0) // if udp
-        server_addr->sin_port = htons(OFFSET_PORT_UDP); // udp offset thread socket port
-    */
+    int32_t tmp, offset[2] = { 0, };
 
     offset_calculated(sock, offset, server_addr, protocol);
 
-    // delay reward
-
+    /* delay reward in T3 server */
     T_.tv_sec += delay[0];
 
-    T_.tv_nsec += delay[1];
-    
-    if(T_.tv_nsec < 0){
-        T_.tv_sec -= 1;
-        T_.tv_nsec = 1000000000 - T_.tv_nsec;
+    tmp = T_.tv_nsec + delay[1];
+
+    if(tmp > 1000000000){
+        T_.tv_sec += 1;
+        T_.tv_nsec = tmp - 1000000000;
     }
+    else if(tmp < 0){
+        T_.tv_sec -= 1;
+        T_.tv_nsec = tmp + 1000000000;
+    }
+    else
+        T_.tv_nse = tmp;
+
+    /* print time */
+    /* server_s.server_us+client.s+client.us+offset(ms)+ */
 
     if(T_.tv_nsec >= 100000000)
         printf("%d.%d+", T_.tv_sec, T_.tv_nsec / 1000);
@@ -349,50 +363,10 @@ void mode_3(int sock, struct sockaddr_in *server_addr, int protocol){
 
     else if(T_present.tv_nsec >= 100)
         printf("%d.000000%d+", T_present.tv_sec, T_present.tv_nsec / 1000);
-
-    // Server Time
-    /*
     
-    const time_t t1 = T_present.tv_sec;  // T4
-    const time_t t2 = T_.tv_sec;  // T3
+    /* ms */
+    printf("%d+", (offset[0] * 1000) + (offset[1] / 1000000));
 
-    drone_date = localtime(&t1);
-    server_date = localtime(&t2);
-
-    drone_ms = T_present.tv_nsec / 1000000;
-
-    server_ms = T_.tv_nsec / 1000000;
-
-    if(server_ms < 100){
-        if(server_date->tm_hour < 10)
-            printf("%d%d%dT0%d%d%d0%d+", server_date->tm_year + 1900 , server_date->tm_mon + 1 , server_date->tm_mday , server_date->tm_hour , server_date->tm_min , server_date->tm_sec, server_ms);
-        else
-            printf("%d%d%dT%d%d%d0%d+", server_date->tm_year + 1900 , server_date->tm_mon + 1 , server_date->tm_mday , server_date->tm_hour , server_date->tm_min , server_date->tm_sec, server_ms);
-    }
-    else{
-        if(server_date->tm_hour < 10)
-            printf("%d%d%dT0%d%d%d%d+", server_date->tm_year + 1900 , server_date->tm_mon + 1 , server_date->tm_mday , server_date->tm_hour , server_date->tm_min , server_date->tm_sec, server_ms);
-        else
-            printf("%d%d%dT%d%d%d%d+", server_date->tm_year + 1900 , server_date->tm_mon + 1 , server_date->tm_mday , server_date->tm_hour , server_date->tm_min , server_date->tm_sec, server_ms);
-    }
-    // MC_Drone Time
-    if(drone_ms < 100){
-        if(drone_date->tm_hour < 10)
-            printf("%d%d%dT0%d%d%d0%d+", drone_date->tm_year + 1900 , drone_date->tm_mon + 1 , drone_date->tm_mday , drone_date->tm_hour , drone_date->tm_min , drone_date->tm_sec, drone_ms);
-        else
-            printf("%d%d%dT%d%d%d0%d+", drone_date->tm_year + 1900 , drone_date->tm_mon + 1 , drone_date->tm_mday , drone_date->tm_hour , drone_date->tm_min , drone_date->tm_sec, drone_ms);
-    }
-    else{
-        if(drone_date->tm_hour < 10)
-            printf("%d%d%dT0%d%d%d%d+", drone_date->tm_year + 1900 , drone_date->tm_mon + 1 , drone_date->tm_mday , drone_date->tm_hour , drone_date->tm_min , drone_date->tm_sec, drone_ms);
-        else
-            printf("%d%d%dT%d%d%d%d+", drone_date->tm_year + 1900 , drone_date->tm_mon + 1 , drone_date->tm_mday , drone_date->tm_hour , drone_date->tm_min , drone_date->tm_sec, drone_ms);
-    }
-    */
-
-    // Offset
-    printf("%d+", (offset[0] * 1000) + (offset[1] / 1000000)); // ms
-    
 }
 
 int TCP_socket(struct sockaddr_in *server_addr, int mode, int protocol){
@@ -409,8 +383,6 @@ int TCP_socket(struct sockaddr_in *server_addr, int mode, int protocol){
     if((sock = socket(AF_INET, SOCK_STREAM, 0)) < 0)
         err("TCP socket()");
 
-    //printf("TCP socket() success\n");
-
     /* SO_TIMESTAMPNS */
 
     if(setsockopt(sock, SOL_SOCKET, SO_TIMESTAMPNS, &enabled, sizeof(enabled)) < 0)
@@ -421,8 +393,6 @@ int TCP_socket(struct sockaddr_in *server_addr, int mode, int protocol){
 
     if(connect(sock, (struct sockaddr*)server_addr, sizeof(*server_addr)) < 0)
         err("connect()");
-
-    //printf("conect() success\n\n");
 
     select_mode(sock, mode, server_addr, protocol);
 
@@ -454,8 +424,6 @@ int UDP_socket(struct sockaddr_in *server_addr, int mode, int protocol){
     if((sock = socket(AF_INET, SOCK_DGRAM, 0)) < 0)
         err("UDP socket()");
 
-    //printf("UDP socket() success\n");
-
     /* SO_TIMESTAMPNS */
 
     if(setsockopt(sock, SOL_SOCKET, SO_TIMESTAMPNS, &enabled, sizeof(enabled)) < 0)
@@ -466,8 +434,6 @@ int UDP_socket(struct sockaddr_in *server_addr, int mode, int protocol){
 
     if(bind(sock, (struct sockaddr*)&client_addr, client_len) < 0)
         err("bind()");
-
-    //printf("bind() success\n\n");
 
     select_mode(sock, mode, server_addr, protocol);
 
