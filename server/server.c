@@ -1,14 +1,13 @@
 #include "server.h"
 
-struct timespec s = { MEDIUM_TERM_SEC, MEDIUM_TERM_NSEC }; // time_t (long) sec long nsec for sleep
+/* time_t (long) sec long nsec for sleep */
+struct timespec s = { MEDIUM_TERM_SEC, MEDIUM_TERM_NSEC };
 
-int Thread_t = 0; // total thread number played
+/* total thread number played to use in TCP protocol */
+int Thread_t = 0;
 
-double Compenstate_FC_MC = 0; // Offset between FC and MC 
-
-double Compenstate_FC_MC_sync = 0;
-
-int chage_comps = 0;
+/* Offset between FC and MC */
+double Compenstate_FC_MC = 0;
 
 int64_t _atoi(char* cdata){
     int sign = 1;
@@ -152,21 +151,23 @@ void *UDP_Thread(void *args){
 
     printf("Client IP : %s Port : %d\n", inet_ntoa(utf.from_addr.sin_addr), ntohs(utf.from_addr.sin_port));
 
+    /* T2 : T[0] server
+       T3 : T[1] server */
+
     clock_gettime(CLOCK_REALTIME, &T[0]);
 
     for (cm = CMSG_FIRSTHDR(&utf.msg); cm; cm = CMSG_NXTHDR(&utf.msg, cm))
         if (SOL_SOCKET == cm->cmsg_level && SO_TIMESTAMPNS == cm->cmsg_type)
             memcpy(&T[0], (struct timespec *)CMSG_DATA(cm), sizeof(struct timespec));
 
-    T_int[0] = T[0].tv_sec + comps_sec; 
+    T_int[0] = T[0].tv_sec + comps_sec;
     T_int[1] = T[0].tv_nsec + comps_nsec;
 
     if(T_int[1] >= 1000000000){
         T_int[0] += 1;
         T_int[1] = T_int[1] % 1000000000;
     }
-
-    if(T_int[1] < 0){
+    else if(T_int[1] < 0){
         T_int[0] -= 1;
         T_int[1] = 1000000000 + T_int[1];
     }
@@ -182,8 +183,7 @@ void *UDP_Thread(void *args){
         T_int[2] += 1;
         T_int[3] = T_int[3] % 1000000000;
     }
-
-    if(T_int[3] < 0){
+    else if(T_int[3] < 0){
         T_int[2] -= 1;
         T_int[3] = 1000000000 + T_int[3];
     }
@@ -191,8 +191,6 @@ void *UDP_Thread(void *args){
     sendto(utf.sock, T_int, sizeof(T_int), 0, (struct sockaddr*)&utf.from_addr, sizeof(utf.from_addr));
 
     printf("\nT2: %ld.%ld\nT3: %ld.%ld\n\n", T[0].tv_sec, T[0].tv_nsec, T[1].tv_sec, T[1].tv_nsec); // time_t (long) : %ld long: %ld
-
-    printf("\nT2: %ld.%ld\nT3: %ld.%ld\n\n", T_int[0], T_int[1], T_int[2], T_int[3]); // time_t (long) : %ld long: %ld
 
     printf("Compenstate_FC_MC : %lfms, %ds, %dns\n", Compenstate_FC_MC, comps_sec, comps_nsec);
 
@@ -206,15 +204,16 @@ void *UDP_FC_COMPS_Thread(void *arg){
 
     struct sockaddr_in client_addr;
 
-    int len = sizeof(client_addr), count = 0, i;
+    int len = sizeof(client_addr), count = 0, tmp = 0, i;
     
-    int64_t temp[2];
+    int64_t max, min;
 
-    int64_t *fc_comps_buf=(int64_t *)malloc(sizeof(int64_t) * 15); //동적할당
+    int64_t *fc_comps_buf=(int64_t *)malloc(sizeof(int64_t) * 30); //동적할당
 
+    /* Ignore the first 5 */
     int sync_during_ignored = 5;
 
-    int count_bound = 10;
+    int count_bound = 15;
 
     char buf[256];
 
@@ -228,26 +227,29 @@ void *UDP_FC_COMPS_Thread(void *arg){
 
         memset(buf, '\0', sizeof(buf));
 
-        if(count > count_bound - 1){
-
-            chage_comps = 1;
+        if(count >= count_bound){
 
             for(i = sync_during_ignored + 1; i < count_bound; i++){
-                temp[0] = fc_comps_buf[sync_during_ignored]; // max
-                temp[1] = fc_comps_buf[sync_during_ignored]; // min
-
+        
+                max = fc_comps_buf[sync_during_ignored];
+                min = fc_comps_buf[sync_during_ignored];
+                
+                /* max */
                 if(fc_comps_buf[i] > temp[0])
-                    temp[0] = fc_comps_buf[i];
-
+                    max = fc_comps_buf[i];
+                
+                /* min */
                 if(fc_comps_buf[i] < temp[1])
-                    temp[1] = fc_comps_buf[i];
-            }
-
-            if((temp[0] + temp[1]) / 2.0 > 5 || (temp[0] + temp[1]) / 2.0 < -5){ // 5 아래는 무시하겠다
-
-                Compenstate_FC_MC += (temp[0] + temp[1]) / 2.0; // 오프셋이 축척되는 것이 문제임
+                    min = fc_comps_buf[i];
             
             }
+
+            tmp = (max + min) / 2.0;
+
+            /* Ignore below 5ms */
+            if(abs(tmp) > 5)
+                /* need much consdiration */
+                Compenstate_FC_MC += tmp;
 
             printf("max : %lld, min : %lld\nCompenstate_FC_MC : %lf\n", temp[0], temp[1], Compenstate_FC_MC);
 
@@ -256,8 +258,6 @@ void *UDP_FC_COMPS_Thread(void *arg){
             count = 0;
 
         }
-
-        chage_comps = 0;
 
     }
 
@@ -307,7 +307,7 @@ int TCP_server(struct sockaddr_in *server_addr){
 
         if(pthread_create(&p_thread, NULL, Server_Socket_Thread, (void *)new) == 0) Thread_t++; // thread success return 0 pthread overlap is ok but index -1 is not ok
 
-        pthread_detach(p_thread); // 자원 반납
+        pthread_detach(p_thread);
 
         printf("%d : Client IP : %s Port : %d\n", Thread_t, inet_ntoa(client_addr.sin_addr), ntohs(client_addr.sin_port));
     }
@@ -359,17 +359,20 @@ int UDP_server(struct sockaddr_in *server_addr){
 
     printf("bind() success\n\n");
 
+    /* FC offset compansation */
     if(pthread_create(&p_thread, NULL, UDP_FC_COMPS_Thread, (void *)fc_comps_sock) != 0)
             err("thread error");
     
-    pthread_detach(p_thread); // 자원 반납
+    /* return resource */
+    pthread_detach(p_thread);
 
     while(recv_socket(utf.sock, &utf.msg, &utf.from_addr) > 0){
 
         if(pthread_create(&p_thread, NULL, UDP_Thread, (void *)&utf) != 0)
             err("thread error");
-            
-        pthread_detach(p_thread);  // 자원 반납
+        
+        /* return resource */
+        pthread_detach(p_thread);
     }
 
     return 0;

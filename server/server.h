@@ -17,11 +17,13 @@
 
 #define BACKLOG 100
 
+/* term between receive and transmit */
 #define MEDIUM_TERM_SEC 0
-#define MEDIUM_TERM_NSEC 10000000 // nanosecond between receive and transmit
+#define MEDIUM_TERM_NSEC 10000000 /* 10,000,000 */
 
-#define PORT 5005 // default port
-
+/* default mc port 5005
+   default fc port 5006 */
+#define PORT 5005 
 #define FC_COMPS_PORT_UDP 5006
 
 typedef struct udp_thread_factor{
