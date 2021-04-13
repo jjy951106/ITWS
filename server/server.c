@@ -235,11 +235,11 @@ void *UDP_FC_COMPS_Thread(void *arg){
                 min = fc_comps_buf[sync_during_ignored];
                 
                 /* max */
-                if(fc_comps_buf[i] > temp[0])
+                if(fc_comps_buf[i] > max)
                     max = fc_comps_buf[i];
                 
                 /* min */
-                if(fc_comps_buf[i] < temp[1])
+                if(fc_comps_buf[i] < min)
                     min = fc_comps_buf[i];
             
             }
