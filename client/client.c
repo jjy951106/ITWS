@@ -317,48 +317,49 @@ void mode_3(int sock, struct sockaddr_in *server_addr, int protocol){
         T_.tv_nsec = tmp + 1000000000;
     }
     else
-        T_.tv_nse = tmp;
+        T_.tv_nsec = tmp;
 
     /* print time */
     /* server_s.server_us+client.s+client.us+offset(ms)+ */
 
-    if(T_.tv_nsec >= 100000000)
+    /* not omit 0 (ex 10000us -> print 010000us) */
+    if(T_.tv_nsec >= 100000000 /* 100,000,000 */)
         printf("%d.%d+", T_.tv_sec, T_.tv_nsec / 1000);
 
-    else if(T_.tv_nsec >= 10000000)
+    else if(T_.tv_nsec >= 10000000 /* 10,000,000 */)
         printf("%d.0%d+", T_.tv_sec, T_.tv_nsec / 1000);
 
-    else if(T_.tv_nsec >= 1000000)
+    else if(T_.tv_nsec >= 1000000 /* 1,000,000 */)
         printf("%d.00%d+", T_.tv_sec, T_.tv_nsec / 1000);
 
-    else if(T_.tv_nsec >= 100000)
+    else if(T_.tv_nsec >= 100000 /* 100,000 */)
         printf("%d.000%d+", T_.tv_sec, T_.tv_nsec / 1000);
 
-    else if(T_.tv_nsec >= 10000)
+    else if(T_.tv_nsec >= 10000 /* 10,000 */)
         printf("%d.0000%d+", T_.tv_sec, T_.tv_nsec / 1000);
 
-    else if(T_.tv_nsec >= 1000)
+    else if(T_.tv_nsec >= 1000 /* 1,000 */)
         printf("%d.00000%d+", T_.tv_sec, T_.tv_nsec / 1000);
 
     else if(T_.tv_nsec >= 100)
         printf("%d.000000%d+", T_.tv_sec, T_.tv_nsec / 1000);
 
-    if(T_present.tv_nsec >= 100000000)
+    if(T_present.tv_nsec >= 100000000 /* 100,000,000 */)
         printf("%d.%d+", T_present.tv_sec, T_present.tv_nsec / 1000);
 
-    else if(T_present.tv_nsec >= 10000000)
+    else if(T_present.tv_nsec >= 10000000 /* 10,000,000 */)
         printf("%d.0%d+", T_present.tv_sec, T_present.tv_nsec / 1000);
 
-    else if(T_present.tv_nsec >= 1000000)
+    else if(T_present.tv_nsec >= 1000000 /* 1,000,000 */)
         printf("%d.00%d+", T_present.tv_sec, T_present.tv_nsec / 1000);
 
-    else if(T_present.tv_nsec >= 100000)
+    else if(T_present.tv_nsec >= 100000 /* 100,000 */)
         printf("%d.000%d+", T_present.tv_sec, T_present.tv_nsec / 1000);
 
-    else if(T_present.tv_nsec >= 10000)
+    else if(T_present.tv_nsec >= 10000 /* 10,000 */)
         printf("%d.0000%d+", T_present.tv_sec, T_present.tv_nsec / 1000);
 
-    else if(T_present.tv_nsec >= 1000)
+    else if(T_present.tv_nsec >= 1000 /* 1,000 */)
         printf("%d.00000%d+", T_present.tv_sec, T_present.tv_nsec / 1000);
 
     else if(T_present.tv_nsec >= 100)
@@ -369,7 +370,7 @@ void mode_3(int sock, struct sockaddr_in *server_addr, int protocol){
 
 }
 
-int TCP_socket(struct sockaddr_in *server_addr, int mode, int protocol){
+int TCP_socket(struct sockaddr_in *server_addr, int mode, int protocol, int thr_tmp){
 
     int sock, enabled = 1;
 
@@ -377,6 +378,8 @@ int TCP_socket(struct sockaddr_in *server_addr, int mode, int protocol){
 
     tv.tv_sec = 3;
     tv.tv_usec = 0;
+
+    thr = thr_tmp;
 
     /* TCP */
 
@@ -402,7 +405,7 @@ int TCP_socket(struct sockaddr_in *server_addr, int mode, int protocol){
 
 }
 
-int UDP_socket(struct sockaddr_in *server_addr, int mode, int protocol){
+int UDP_socket(struct sockaddr_in *server_addr, int mode, int protocol, int thr_tmp){
 
     int sock, enabled = 1;
 
@@ -410,6 +413,8 @@ int UDP_socket(struct sockaddr_in *server_addr, int mode, int protocol){
 
     tv.tv_sec = 3;
     tv.tv_usec = 0;
+
+    thr = thr_tmp;
 
     struct sockaddr_in client_addr;
 

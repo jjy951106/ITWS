@@ -2,7 +2,7 @@
 
 int main(int argc, char *argv[]){
 
-    int mode = 1 /*default mode 1*/, protocol = 0;
+    int mode = 1 /* default mode_1 */, protocol = 0; /* default protocol UDP */
 
     int32_t thr = 5000000; // threshold default 5,000,000 ns
 
@@ -32,24 +32,21 @@ int main(int argc, char *argv[]){
 
     if(argc >= 4) server_addr.sin_port = htons(atoi(argv[3]));
 
-    if(argc >= 5 && atoi(argv[4]) == 1) protocol = 1; // default 0 : UDP
+    if(argc >= 5 && atoi(argv[4]) == 1) protocol = 1;
 
-    if(argc == 6) thr = atoi(argv[5]) * 1000000; // threshold default 5,000,000 ns // input ms
+    /* threshold default 5ms (input ms) */
+    if(argc == 6) thr = atoi(argv[5]) * 1000000; 
 
     if (argc > 6) {
 		printf("Input exceeded\n");
 		return 0;
 	}
 
-    if (protocol == 0){
-        //printf("UDP client\n\n");
-		UDP_socket(&server_addr, mode, protocol);
-    }
+    if (protocol == 0)
+		UDP_socket(&server_addr, mode, protocol, thr);
 
-	else{
-        //printf("TCP client\n\n");
-		TCP_socket(&server_addr, mode, protocol);
-    }
+	else
+		TCP_socket(&server_addr, mode, protocol, thr);
 
     return 0;
 

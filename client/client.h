@@ -59,7 +59,7 @@ void mode_2(int sock, struct sockaddr_in *server_addr, int protocol);
 void mode_3(int sock, struct sockaddr_in *server_addr, int protocol);
 
 /* TCP protocol */
-int TCP_socket(struct sockaddr_in *server_addr, int mode, int protocol);
+int TCP_socket(struct sockaddr_in *server_addr, int mode, int protocol, int thr);
 
 /* UDP protocol */
-int UDP_socket(struct sockaddr_in *server_addr, int mode, int protocol);
+int UDP_socket(struct sockaddr_in *server_addr, int mode, int protocol, int thr);
