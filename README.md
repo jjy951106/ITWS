@@ -1,2 +1,2 @@
 # ITWS
- sync
+make all
