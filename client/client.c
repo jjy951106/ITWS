@@ -304,11 +304,11 @@ void mode_3(int sock, struct sockaddr_in *server_addr, int protocol){
     int32_t tmp, offset[2] = { 0, };
 
     /* need to add this code in python */
-    for(i=0; i<5; i++){
+    for(i=0; i<10; i++){
         offset_calculated(sock, offset, server_addr, protocol);
         if(abs(offset[1]) <= BOUNDARY)
             break;
-        sleep(1);
+        sleep(1.5);
     }
 
     /* delay reward in T3 server */
