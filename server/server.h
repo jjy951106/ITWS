@@ -34,6 +34,15 @@ typedef struct udp_thread_factor{
 
 }udp_thread_factor;
 
+typedef struct fc_offset{
+    int64_t max;
+    int64_t min;
+    int64_t fc_comps_buf[30];
+    int count;
+    int count_bound;
+    int sync_during_ignored; /* Ignore the first 5 */
+}fc_offset;
+
 /* character -> number (custom) no limit size */
 int64_t _atoi(char *cdata);
 
@@ -46,11 +55,16 @@ int recv_socket(int sock, struct msghdr *msg, struct sockaddr_in *from_addr);
 /* TCP sync Thread */
 void *Server_Socket_Thread(void *arg);
 
-/* UDP sync Thread */
+/* UDP sync Thread (change Thread -> just Function for stability) */
 void *UDP_Thread(void *args);
+
+/* UDP sync Function */
+void UDP_Function(void *args, double Compenstate_FC_MC);
 
 /* UDP FC sync Thread */
 void *UDP_FC_COMPS_Thread(void *arg);
+
+void UDP_FC_COMPS_Fuction(void *args, fc_offset *fc, char *buf, double *Compenstate_FC_MC);
 
 /* TCP protocol */
 int TCP_server(struct sockaddr_in *server_addr);

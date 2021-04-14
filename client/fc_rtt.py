@@ -3,8 +3,8 @@ import paho.mqtt.client as mqtt
 from pymavlink import mavutil
 from datetime import datetime as dt
 
-HOST = "210.107.214.194"
-PORT = 5006
+HOST = "192.168.0.157"
+PORT = 5005
 ADDR = (HOST, PORT)
 
 count = tmp = fc_lt = 0
@@ -12,7 +12,7 @@ N = 20
 
 sock = socket(AF_INET, SOCK_DGRAM)
 
-fc_port = mavutil.mavlink_connection("COM6")
+fc_port = mavutil.mavlink_connection("/dev/ttyACM1") # /dev/ttyACM1
 
 # Interval initialize
 fc_port.mav.request_data_stream_send( fc_port.target_system, fc_port.target_system, 0, 5, 1 )            
@@ -52,6 +52,7 @@ while True:
     
     print("msg : {}\nfc_time : {}\nfc_offset : {}\nnow : {}".format(msg, fc_time, fc_offset, now))
     
+    # send ms measure
     count = count + 1
     tmp = tmp + (fc_offset / N)
     if count is N:

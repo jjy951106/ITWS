@@ -6,6 +6,8 @@ int main(int argc, char *argv[]){
   
   int protocol = 0;/* filename port */
 
+  char* intial = "initialization";
+
   memset(&server_addr, '\0', sizeof(server_addr));
 
   server_addr.sin_family = AF_INET;
@@ -20,7 +22,7 @@ int main(int argc, char *argv[]){
     printf("Input exceeded\n");
     return 0;
   }
-
+  
   if (protocol == 0)
     UDP_server(&server_addr);
   else

@@ -9,7 +9,7 @@ int32_t delay[2] = { 0, };
 int32_t thr = 5000000; /* threshold default 5ms to use in mode_2 */
 
 static const unsigned char binary[] = {
-    0x00, 0x01, 0x00, 0x01
+    "offset"
 };
 
 static void err(const char *error){
@@ -69,7 +69,9 @@ void recv_socket(int sock, struct msghdr *msg, struct sockaddr_in *server_addr, 
 
     re = recvmsg(sock, msg, 0);
 
+    /* If a packet is not received within a certain period of time, it is retransmitted */
     while(re == -1){
+
         /* T1 update */
         clock_gettime(CLOCK_REALTIME, T);
   
