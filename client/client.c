@@ -299,11 +299,17 @@ void mode_3(int sock, struct sockaddr_in *server_addr, int protocol){
 
     struct tm *server_date, *drone_date;
 
-    int drone_ms, server_ms;
+    int drone_ms, server_ms, i;
 
     int32_t tmp, offset[2] = { 0, };
 
-    offset_calculated(sock, offset, server_addr, protocol);
+    /* need to add this code in python */
+    for(i=0; i<5; i++){
+        offset_calculated(sock, offset, server_addr, protocol);
+        if(abs(offset[1]) <= BOUNDARY)
+            break;
+        sleep(1);
+    }
 
     /* delay reward in T3 server */
     T_.tv_sec += delay[0];
