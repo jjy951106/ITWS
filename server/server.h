@@ -32,6 +32,9 @@ typedef struct udp_thread_factor{
     struct msghdr msg;
     struct sockaddr_in from_addr;
 
+    /* Offset between FC and MC */
+    double Compenstate_FC_MC;
+
 }udp_thread_factor;
 
 typedef struct fc_offset{
@@ -55,14 +58,14 @@ int recv_socket(int sock, struct msghdr *msg, struct sockaddr_in *from_addr);
 /* TCP sync Thread */
 void *Server_Socket_Thread(void *arg);
 
-/* UDP sync Thread (change Thread -> just Function for stability) */
+/* UDP sync Thread */
 void *UDP_Thread(void *args);
-
-/* UDP sync Function */
-void UDP_Function(void *args, double Compenstate_FC_MC);
 
 /* UDP FC sync Thread */
 void *UDP_FC_COMPS_Thread(void *arg);
+
+/* UDP sync Function */
+void UDP_Function(void *args);
 
 void UDP_FC_COMPS_Fuction(void *args, fc_offset *fc, char *buf, double *Compenstate_FC_MC);
 

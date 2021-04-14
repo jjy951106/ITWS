@@ -106,7 +106,7 @@ void *Server_Socket_Thread(void *arg){
     return 0;
 }
 
-void UDP_Function(void *args, double Compenstate_FC_MC){
+void *UDP_Thread(void *args){
 
     udp_thread_factor utf = *((udp_thread_factor*)args);
     
@@ -118,8 +118,8 @@ void UDP_Function(void *args, double Compenstate_FC_MC){
     int32_t T_int[4]; // for compatiblility between 32bit and 64bit
 
     /* recv ms measure */
-    int32_t comps_sec = (int32_t)(Compenstate_FC_MC / 1000);
-    int32_t comps_nsec = (int32_t)((Compenstate_FC_MC - (int64_t)(Compenstate_FC_MC / 1000) * 1000) * 1000000);
+    int32_t comps_sec = (int32_t)(utf.Compenstate_FC_MC / 1000);
+    int32_t comps_nsec = (int32_t)((utf.Compenstate_FC_MC - (int64_t)(utf.Compenstate_FC_MC / 1000) * 1000) * 1000000);
 
     printf("Client IP : %s Port : %d\n", inet_ntoa(utf.from_addr.sin_addr), ntohs(utf.from_addr.sin_port));
 
@@ -164,7 +164,7 @@ void UDP_Function(void *args, double Compenstate_FC_MC){
 
     printf("\nT2: %ld.%ld\nT3: %ld.%ld\n\n", T[0].tv_sec, T[0].tv_nsec, T[1].tv_sec, T[1].tv_nsec); // time_t (long) : %ld long: %ld
 
-    printf("Compenstate_FC_MC : %lfms, %ds, %dns\n", Compenstate_FC_MC, comps_sec, comps_nsec);
+    printf("Compenstate_FC_MC : %lfms, %ds, %dns\n", utf.Compenstate_FC_MC, comps_sec, comps_nsec);
 
     return 0;
 
@@ -274,10 +274,9 @@ int UDP_server(struct sockaddr_in *server_addr){
 
     char data[256];
 
-    udp_thread_factor utf;
-    
-    /* Offset between FC and MC */
-    double Compenstate_FC_MC = 0;
+    pthread_t p_thread; // thread identifier
+
+    udp_thread_factor utf = {0,};
     
     if((utf.sock = socket(AF_INET, SOCK_DGRAM, 0)) == -1){
         printf("UDP socket() failed\n");
@@ -302,10 +301,14 @@ int UDP_server(struct sockaddr_in *server_addr){
         strcpy(data, utf.msg.msg_iov->iov_base);
 
         if(!strcmp("offset", data)){
-            UDP_Function((void *)&utf, Compenstate_FC_MC);
+            if(pthread_create(&p_thread, NULL, UDP_Thread, (void *)&utf) != 0)
+                err("thread error");
+
+            // return resource 
+            pthread_detach(p_thread);
         }
         else
-            UDP_FC_COMPS_Fuction((void *)&utf, &fc, data, &Compenstate_FC_MC);
+            UDP_FC_COMPS_Fuction((void *)&utf, &fc, data, &utf.Compenstate_FC_MC);
 
     }
 
