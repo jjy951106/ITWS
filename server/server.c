@@ -202,9 +202,10 @@ void UDP_FC_COMPS_Fuction(void *args, fc_offset *fc, char *buf, double *Compenst
         }
 
         tmp = (fc->max + fc->min) / 2.0;
+        printf("%d\n", abs(utf.Compenstate_FC_MC - tmp));
 
-        /* Ignore below 5ms */
-        if(abs(tmp) > 5)
+        /* Ignore below 5ms && The difference from the previous value must be more than 5*/
+        if(abs(tmp) > 5 && abs(utf.Compenstate_FC_MC - tmp) > 5)
             /* need much consdiration */
             *Compenstate_FC_MC += tmp;
 
