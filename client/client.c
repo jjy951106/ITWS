@@ -4,8 +4,6 @@ int32_t DEVIATION = 50000000; /* initial DEVIATION is 50ms */
 
 struct timespec T_, T_present;
 
-int32_t delay[2] = { 0, };
-
 int32_t thr = 5000000; /* threshold default 5ms to use in mode_2 */
 
 static const unsigned char binary[] = {
@@ -106,7 +104,7 @@ void initialized_T(int sock, struct sockaddr_in *server_addr, int protocol){
 
 }
 
-void offset_calculated(int sock, int *offset, struct sockaddr_in *server_addr, int protocol){
+void offset_calculated(int sock, int *offset, struct sockaddr_in *server_addr, int protocol, int *delay){
 
     struct msghdr msg;
 
@@ -152,10 +150,12 @@ void offset_calculated(int sock, int *offset, struct sockaddr_in *server_addr, i
 
     offset[1] = ((T[1].tv_nsec - T[0].tv_nsec) - (T[3].tv_nsec - T[2].tv_nsec)) / 2;
 
-    /* delay (+ or -) */
-    delay[0] = ((T[1].tv_sec - T[0].tv_sec) + (T[3].tv_sec - T[2].tv_sec)) / 2;
+    if(delay != NULL){
+        /* delay (+ or -) */
+        delay[0] = ((T[1].tv_sec - T[0].tv_sec) + (T[3].tv_sec - T[2].tv_sec)) / 2;
 
-    delay[1] = ((T[1].tv_nsec - T[0].tv_nsec) + (T[3].tv_nsec - T[2].tv_nsec)) / 2;
+        delay[1] = ((T[1].tv_nsec - T[0].tv_nsec) + (T[3].tv_nsec - T[2].tv_nsec)) / 2;
+    }
 }
 
 void iterative_offset_calculated(int sock, int32_t *offset, struct sockaddr_in *server_addr, int protocol){
@@ -170,7 +170,7 @@ void iterative_offset_calculated(int sock, int32_t *offset, struct sockaddr_in *
 
     for(iter = 0; iter < ITERATION; iter++){
 
-        offset_calculated(sock, temp, server_addr, protocol);
+        offset_calculated(sock, temp, server_addr, protocol, NULL);
 
         if(temp[0] > 5 /* second (5s or 10s) */){
             initialized_T(sock, server_addr, protocol);
@@ -275,7 +275,7 @@ void mode_2(int sock, struct sockaddr_in *server_addr, int protocol){
         offset[0] = 0;
         offset[1] = 0;
 
-        offset_calculated(sock, offset, server_addr, protocol);
+        offset_calculated(sock, offset, server_addr, protocol, NULL);
 
         sleep(offset_interval);
 
@@ -301,11 +301,11 @@ void mode_3(int sock, struct sockaddr_in *server_addr, int protocol){
 
     int drone_ms, server_ms, i;
 
-    int32_t tmp, offset[2] = { 0, };
+    int32_t tmp, offset[2] = { 0, }, delay[2] = { 0, };
 
     /* need to add this code in python */
     for(i=0; i<10; i++){
-        offset_calculated(sock, offset, server_addr, protocol);
+        offset_calculated(sock, offset, server_addr, protocol, delay);
         if(abs(offset[1]) <= BOUNDARY)
             break;
         sleep(1.5);

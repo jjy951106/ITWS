@@ -44,7 +44,7 @@ void recv_socket(int sock, struct msghdr *msg, struct sockaddr_in *server_addr, 
 void initialized_T(int sock, struct sockaddr_in *server_addr, int protocol);
 
 /* once offset */
-void offset_calculated(int sock, int *offset, struct sockaddr_in *server_addr, int protocol);
+void offset_calculated(int sock, int *offset, struct sockaddr_in *server_addr, int protocol, int *delay);
 
 /* iterative offset mean in adaptive deviations */
 void iterative_offset_calculated(int sock, int32_t *offset, struct sockaddr_in *server_addr, int protocol);

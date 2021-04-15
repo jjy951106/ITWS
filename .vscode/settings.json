@@ -3,6 +3,7 @@
         "client.h": "c",
         "time.h": "c",
         "string.h": "c",
-        "xiosbase": "c"
+        "xiosbase": "c",
+        "cstdlib": "c"
     }
 }
