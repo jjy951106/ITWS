@@ -186,11 +186,11 @@ void UDP_FC_COMPS_Fuction(void *args, fc_offset *fc, char *buf, double *Compenst
 
     if(fc->count >= fc->count_bound){
 
+        fc->max = fc->fc_comps_buf[fc->sync_during_ignored];
+        fc->min = fc->fc_comps_buf[fc->sync_during_ignored];
+
         for(i = fc->sync_during_ignored + 1; i < fc->count_bound; i++){
-        
-            fc->max = fc->fc_comps_buf[fc->sync_during_ignored];
-            fc->min = fc->fc_comps_buf[fc->sync_during_ignored];
-                
+         
             /* max */
             if(fc->fc_comps_buf[i] > fc->max)
                 fc->max = fc->fc_comps_buf[i];
