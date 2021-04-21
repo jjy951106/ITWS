@@ -15,7 +15,7 @@
 #include <netinet/ip_icmp.h>
 #include <arpa/inet.h>
 
-#define SERVER "192.168.0.160" // test server
+#define SERVER "1.239.197.74" // test server : 192.168.0.160
 #define PORT 5005              // default port
 
 #define ITERATION 10       // measure offset number
