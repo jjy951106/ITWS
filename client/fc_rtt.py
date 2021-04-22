@@ -12,7 +12,7 @@ N = 20
 
 sock = socket(AF_INET, SOCK_DGRAM)
 
-fc_port = mavutil.mavlink_connection("/dev/ttyACM1") # /dev/ttyACM1
+fc_port = mavutil.mavlink_connection("/dev/ttyACM0") # /dev/ttyACM1
 
 # Interval initialize
 fc_port.mav.request_data_stream_send( fc_port.target_system, fc_port.target_system, 0, 5, 1 )            
