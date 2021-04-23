@@ -266,6 +266,8 @@ void mode_2(int sock, struct sockaddr_in *server_addr, int protocol){
 
     struct timespec C; // C (current)
 
+    int i;
+
     initialized_T(sock, server_addr, protocol);
 
     while(1){
