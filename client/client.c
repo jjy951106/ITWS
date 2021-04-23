@@ -276,7 +276,7 @@ void mode_2(int sock, struct sockaddr_in *server_addr, int protocol){
         /* need to add this code in python */
         /* It is related to synch problem that sleep term is more than 1.5 and iteration is pretty large as 10 */
         for(i=0; i<5; i++){ // test needed
-            offset_calculated(sock, offset, server_addr, protocol, delay);
+            offset_calculated(sock, offset, server_addr, protocol, NULL);
             if(abs(offset[1]) <= BOUNDARY)
                 break;
             sleep(0.5); // test needed
