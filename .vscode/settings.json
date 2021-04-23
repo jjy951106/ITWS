@@ -4,6 +4,7 @@
         "time.h": "c",
         "string.h": "c",
         "xiosbase": "c",
-        "cstdlib": "c"
+        "cstdlib": "c",
+        "assert.h": "c"
     }
 }

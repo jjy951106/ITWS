@@ -2,17 +2,19 @@ from socket import *
 import paho.mqtt.client as mqtt
 from pymavlink import mavutil
 from datetime import datetime as dt
+import time
 
 HOST = "1.239.197.74" # 1.239.197.74
 PORT = 5005
 ADDR = (HOST, PORT)
 
 count = tmp = fc_lt = 0
-N = 20
+N = 10 # this is needed to reduce
+sendTerm = 7 # second
 
 sock = socket(AF_INET, SOCK_DGRAM)
 
-fc_port = mavutil.mavlink_connection("/dev/ttyACM0") # /dev/ttyACM1
+fc_port = mavutil.mavlink_connection("COM6") # /dev/ttyACM1
 
 # Interval initialize
 fc_port.mav.request_data_stream_send( fc_port.target_system, fc_port.target_system, 0, 5, 1 )            
@@ -26,7 +28,9 @@ while True:
     msg = fc_port.recv_match(type='SYSTEM_TIME',blocking=True)
     # print(msg.time_unix_usec)
     if msg.time_unix_usec > 10: break    
-   
+
+start = time.time()
+
 while True:
 
     # Send timesync
@@ -56,6 +60,18 @@ while True:
     count = count + 1
     tmp = tmp + (fc_offset / N)
     if count is N:
+        enteredTime = time.time() - start
+        if sendTerm - enteredTime >= 0:
+            time.sleep(sendTerm - enteredTime)
+        
         sock.sendto(str(tmp).encode(), ADDR)
         count = 0
         tmp = 0
+        
+        # startTime initialization
+        start = time.time()
+
+        print(f'enteredTime : {enteredTime}, sleepTime : {sendTerm - enteredTime}')
+
+        
+        

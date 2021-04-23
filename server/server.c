@@ -269,7 +269,7 @@ int TCP_server(struct sockaddr_in *server_addr){
 
 int UDP_server(struct sockaddr_in *server_addr){
 
-    fc_offset fc = {0, 0, {0}, 0, 15, 5};
+    fc_offset fc = {0, 0, {0}, 0, 30, 7};
 
     int enabled = 1;
 
