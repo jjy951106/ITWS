@@ -3,6 +3,7 @@ import paho.mqtt.client as mqtt
 from pymavlink import mavutil
 from datetime import datetime as dt
 import time
+from socket import *
 
 HOST = "1.239.197.74" # 1.239.197.74
 PORT = 5005

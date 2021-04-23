@@ -266,8 +266,6 @@ void mode_2(int sock, struct sockaddr_in *server_addr, int protocol){
 
     struct timespec C; // C (current)
 
-    int offset_interval = 3; // offset measurament interval
-
     initialized_T(sock, server_addr, protocol);
 
     while(1){
@@ -275,22 +273,17 @@ void mode_2(int sock, struct sockaddr_in *server_addr, int protocol){
         offset[0] = 0;
         offset[1] = 0;
 
-        offset_calculated(sock, offset, server_addr, protocol, NULL);
-
-        sleep(offset_interval);
-
-        if(abs(offset[0]) > 1 || abs(offset[1]) > thr) offset_check++;
-
-        if(offset_check >= 3){
-
-            offset_check = 0;
-
-            mode_1(sock, server_addr, protocol);
-
-            sleep(3);
-
+        /* need to add this code in python */
+        /* It is related to synch problem that sleep term is more than 1.5 and iteration is pretty large as 10 */
+        for(i=0; i<5; i++){ // test needed
+            offset_calculated(sock, offset, server_addr, protocol, delay);
+            if(abs(offset[1]) <= BOUNDARY)
+                break;
+            sleep(0.5); // test needed
         }
 
+        if(abs(offset[0]) > 1 || abs(offset[1]) > thr) 
+            mode_1(sock, server_addr, protocol);
     }
 
 }
