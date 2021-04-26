@@ -212,10 +212,7 @@ void mode_1(int sock, struct sockaddr_in *server_addr, int protocol){
     int32_t tmp, offset[2];
 
     struct timespec C; // C (current)
-
-    /* outer offset initialization algorithm */
-    // initialized_T(sock, server_addr, protocol); // 60 -> 30 -> 1
-
+    
     while(1){
 
         offset[0] = 0;
