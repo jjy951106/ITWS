@@ -214,7 +214,7 @@ void mode_1(int sock, struct sockaddr_in *server_addr, int protocol){
     struct timespec C; // C (current)
 
     /* outer offset initialization algorithm */
-    initialized_T(sock, server_addr, protocol);
+    // initialized_T(sock, server_addr, protocol); // 60 -> 30 -> 1
 
     while(1){
 
@@ -284,7 +284,7 @@ void mode_2(int sock, struct sockaddr_in *server_addr, int protocol){
             sleep(0.7); // test needed
         }
 
-        if(abs(offset[0]) > 1 || abs(offset[1]) > thr) 
+        if(abs(offset[0]) > 1 || abs(offset[1]) > BOUNDARY) 
             mode_1(sock, server_addr, protocol);
     }
 
@@ -300,11 +300,11 @@ void mode_3(int sock, struct sockaddr_in *server_addr, int protocol){
 
     /* need to add this code in python */
     /* It is related to synch problem that sleep term is more than 1.5 and iteration is pretty large as 10 */
-    for(i=0; i<5; i++){ // test needed
+    for(i=0; i<10; i++){ // test needed
         offset_calculated(sock, offset, server_addr, protocol, delay);
         if(abs(offset[1]) <= BOUNDARY)
             break;
-        sleep(0.7); // test needed
+        sleep(0.5); // test needed
     }
 
     /* delay reward in T3 server */

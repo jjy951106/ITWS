@@ -13,7 +13,7 @@ connectionIndex = 1
 
 count = tmp = fc_lt = 0
 N = 10 # this is needed to reduce
-sendTerm = 7 # second
+sendTerm = 5 # second
 
 sock = socket(AF_INET, SOCK_DGRAM)
 
@@ -88,8 +88,8 @@ while True:
             time.sleep(sendTerm - enteredTime)
         
         # more than 100ms companste gps time assumes gps sync problem and so this problem is ignored.
-        if abs(tmp) < 100:
-            sock.sendto(str(tmp).encode(), ADDR)
+        # if abs(tmp) < 100:
+        sock.sendto(str(tmp).encode(), ADDR)
         count = 0
         tmp = 0
         
