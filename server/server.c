@@ -162,9 +162,9 @@ void *UDP_Thread(void *args){
 
     sendto(utf.sock, T_int, sizeof(T_int), 0, (struct sockaddr*)&utf.from_addr, sizeof(utf.from_addr));
 
-    printf("\nT2: %ld.%ld\nT3: %ld.%ld\n\n", T[0].tv_sec, T[0].tv_nsec, T[1].tv_sec, T[1].tv_nsec); // time_t (long) : %ld long: %ld
+    printf("\nT2: %ld.%ld\nT3: %ld.%ld\n\nCompenstate_FC_MC : %lfms, %ds, %dns\n", T[0].tv_sec, T[0].tv_nsec, T[1].tv_sec, T[1].tv_nsec, utf.Compenstate_FC_MC, comps_sec, comps_nsec); // time_t (long) : %ld long: %ld
 
-    printf("Compenstate_FC_MC : %lfms, %ds, %dns\n", utf.Compenstate_FC_MC, comps_sec, comps_nsec);
+    // printf("Compenstate_FC_MC : %lfms, %ds, %dns\n", utf.Compenstate_FC_MC, comps_sec, comps_nsec);
 
     return 0;
 
