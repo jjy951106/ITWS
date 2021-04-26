@@ -8,6 +8,8 @@ from socket import *
 HOST = "1.239.197.74" # 1.239.197.74
 PORT = 5005
 ADDR = (HOST, PORT)
+connection = False
+connectionIndex = 1
 
 count = tmp = fc_lt = 0
 N = 10 # this is needed to reduce
@@ -15,7 +17,22 @@ sendTerm = 7 # second
 
 sock = socket(AF_INET, SOCK_DGRAM)
 
-fc_port = mavutil.mavlink_connection("COM6") # /dev/ttyACM1
+while(connection is False):
+    try:
+        if connectionIndex == 1:
+            fc_port = mavutil.mavlink_connection("/dev/ttyACM0") # /dev/ttyACM1
+        elif connectionIndex == 2:
+            fc_port = mavutil.mavlink_connection("/dev/ttyACM1")
+        elif connectionIndex == 3:
+            fc_port = mavutil.mavlink_connection("/dev/ttyAMA0")
+        else:
+            fc_port = mavutil.mavlink_connection("COM6")
+        connection = True
+    except:
+        connectionIndex = connectionIndex + 1
+        pass
+
+
 
 # Interval initialize
 fc_port.mav.request_data_stream_send( fc_port.target_system, fc_port.target_system, 0, 5, 1 )            
@@ -65,7 +82,9 @@ while True:
         if sendTerm - enteredTime >= 0:
             time.sleep(sendTerm - enteredTime)
         
-        sock.sendto(str(tmp).encode(), ADDR)
+        # more than 100ms companste gps time assumes gps sync problem and so this problem is ignored.
+        if abs(tmp) < 100:
+            sock.sendto(str(tmp).encode(), ADDR)
         count = 0
         tmp = 0
         
