@@ -106,6 +106,69 @@ void *Server_Socket_Thread(void *arg){
     return 0;
 }
 
+void UDP_Function(void *args){
+    
+    udp_thread_factor utf = *((udp_thread_factor*)args);
+
+    /* printpacket */
+    struct cmsghdr *cm;
+
+    struct timespec T[2];
+
+    int32_t T_int[4]; // for compatiblility between 32bit and 64bit
+
+    /* recv ms measure */
+    int32_t comps_sec = (int32_t)(utf.Compenstate_FC_MC / 1000);
+    int32_t comps_nsec = (int32_t)((utf.Compenstate_FC_MC - (int64_t)(utf.Compenstate_FC_MC / 1000) * 1000) * 1000000);
+
+    printf("Client IP : %s Port : %d\n", inet_ntoa(utf.from_addr.sin_addr), ntohs(utf.from_addr.sin_port));
+
+    /* T2 : T[0] server
+       T3 : T[1] server */
+
+    clock_gettime(CLOCK_REALTIME, &T[0]);
+
+    for (cm = CMSG_FIRSTHDR(&utf.msg); cm; cm = CMSG_NXTHDR(&utf.msg, cm))
+        if (SOL_SOCKET == cm->cmsg_level && SO_TIMESTAMPNS == cm->cmsg_type)
+            memcpy(&T[0], (struct timespec *)CMSG_DATA(cm), sizeof(struct timespec));
+
+    T_int[0] = T[0].tv_sec + comps_sec;
+    T_int[1] = T[0].tv_nsec + comps_nsec;
+
+    if(T_int[1] >= 1000000000){
+        T_int[0] += 1;
+        T_int[1] = T_int[1] % 1000000000;
+    }
+    else if(T_int[1] < 0){
+        T_int[0] -= 1;
+        T_int[1] = 1000000000 + T_int[1];
+    }
+
+    nanosleep(&s, NULL);
+
+    clock_gettime(CLOCK_REALTIME, &T[1]);
+
+    T_int[2] = T[1].tv_sec + comps_sec; 
+    T_int[3] = T[1].tv_nsec + comps_nsec;
+
+    if(T_int[3] >= 1000000000){
+        T_int[2] += 1;
+        T_int[3] = T_int[3] % 1000000000;
+    }
+    else if(T_int[3] < 0){
+        T_int[2] -= 1;
+        T_int[3] = 1000000000 + T_int[3];
+    }
+
+    sendto(utf.sock, T_int, sizeof(T_int), 0, (struct sockaddr*)&utf.from_addr, sizeof(utf.from_addr));
+
+    printf("\nT2: %ld.%ld\nT3: %ld.%ld\n\nCompenstate_FC_MC : %lfms, %ds, %dns\n", T[0].tv_sec, T[0].tv_nsec, T[1].tv_sec, T[1].tv_nsec, utf.Compenstate_FC_MC, comps_sec, comps_nsec); // time_t (long) : %ld long: %ld
+
+    // printf("Compenstate_FC_MC : %lfms, %ds, %dns\n", utf.Compenstate_FC_MC, comps_sec, comps_nsec);
+
+    return 0;
+}
+
 void *UDP_Thread(void *args){
 
     udp_thread_factor utf = *((udp_thread_factor*)args);
@@ -302,11 +365,16 @@ int UDP_server(struct sockaddr_in *server_addr){
         strcpy(data, utf.msg.msg_iov->iov_base);
 
         if(!strcmp("offset", data)){
+
+            /* Thread
             if(pthread_create(&p_thread, NULL, UDP_Thread, (void *)&utf) != 0)
                 err("thread error");
 
             // return resource 
-            pthread_detach(p_thread);
+            pthread_detach(p_thread); */
+
+            /* Function */
+            UDP_Function((void *)&utf);
         }
         else
             UDP_FC_COMPS_Fuction((void *)&utf, &fc, data, &utf.Compenstate_FC_MC);

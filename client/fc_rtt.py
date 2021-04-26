@@ -20,19 +20,24 @@ sock = socket(AF_INET, SOCK_DGRAM)
 while(connection is False):
     try:
         if connectionIndex == 1:
-            fc_port = mavutil.mavlink_connection("/dev/ttyACM0") # /dev/ttyACM1
+            print('1')
+            fc_port = mavutil.mavlink_connection("/dev/ttyACM0") # /dev/ttyACM0 or /dev/ttyACM1
         elif connectionIndex == 2:
-            fc_port = mavutil.mavlink_connection("/dev/ttyACM1")
+            print('2')
+            print(mavutil.mavlink_connection("/dev/ttyACM1"))
         elif connectionIndex == 3:
+            print('3')
             fc_port = mavutil.mavlink_connection("/dev/ttyAMA0")
+        elif connectionIndex == 4:
+            print('4')
+            fc_port = mavutil.mavlink_connection("/dev/serial0") # USB0
         else:
-            fc_port = mavutil.mavlink_connection("COM6")
+            print('5')
+            fc_port = mavutil.mavlink_connection("/dev/serial1") # USB1
         connection = True
     except:
         connectionIndex = connectionIndex + 1
         pass
-
-
 
 # Interval initialize
 fc_port.mav.request_data_stream_send( fc_port.target_system, fc_port.target_system, 0, 5, 1 )            
