@@ -304,7 +304,7 @@ void mode_3(int sock, struct sockaddr_in *server_addr, int protocol){
         offset_calculated(sock, offset, server_addr, protocol, delay);
         if(abs(offset[1]) <= BOUNDARY)
             break;
-        sleep(0.5); // test needed
+        sleep(0.7); // test needed
     }
 
     /* delay reward in T3 server */
