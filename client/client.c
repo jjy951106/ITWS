@@ -278,7 +278,7 @@ void mode_2(int sock, struct sockaddr_in *server_addr, int protocol){
             offset_calculated(sock, offset, server_addr, protocol, NULL);
             if(abs(offset[1]) <= BOUNDARY)
                 break;
-            sleep(0.7); // test needed
+            sleep(1); // test needed
         }
 
         if(abs(offset[0]) > 1 || abs(offset[1]) > BOUNDARY) 
