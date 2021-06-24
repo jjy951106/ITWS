@@ -98,4 +98,4 @@ while True:
 
         print(f'enteredTime : {enteredTime}, sleepTime : {sendTerm - enteredTime}')
         
-#notebook
+#notebook test
