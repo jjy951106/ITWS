@@ -97,9 +97,3 @@ while True:
         start = time.time()
 
         print(f'enteredTime : {enteredTime}, sleepTime : {sendTerm - enteredTime}')
-        
-<<<<<<< HEAD
-#test
-=======
-#notebook test test
->>>>>>> fadc2da4ef8bfe7034ec9db0eceecc88279c3a20
