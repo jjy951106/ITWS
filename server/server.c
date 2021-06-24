@@ -242,14 +242,14 @@ void UDP_FC_COMPS_Fuction(void *args, fc_offset *fc, char *buf, double *Compenst
 
     double tmp = 0, tmp2 = 0;
 
-    fc_offset = _atoi(buf);
+    int64_t offset_tmp = _atoi(buf);
 
-    printf("%d : %lld\n", fc->count, fc_offset);
+    printf("%d : %lld\n", fc->count, offset_tmp);
 
     /* below 1s */
-    if(fc_offset < 1000){
+    if(offset_tmp < 1000){
 
-        fc->fc_comps_buf[fc->count] = fc_offset;
+        fc->fc_comps_buf[fc->count] = offset_tmp;
 
         fc->count++;
     
