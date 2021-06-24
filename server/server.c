@@ -132,6 +132,7 @@ void UDP_Function(void *args){
         if (SOL_SOCKET == cm->cmsg_level && SO_TIMESTAMPNS == cm->cmsg_type)
             memcpy(&T[0], (struct timespec *)CMSG_DATA(cm), sizeof(struct timespec));
 
+    /* add compensation time */
     T_int[0] = T[0].tv_sec + comps_sec;
     T_int[1] = T[0].tv_nsec + comps_nsec;
 
@@ -239,38 +240,54 @@ void UDP_FC_COMPS_Fuction(void *args, fc_offset *fc, char *buf, double *Compenst
     
     int i;
 
-    double tmp = 0;
+    double tmp = 0, tmp2 = 0;
 
-    printf("%d : %lld\n", fc->count, _atoi(buf));
+    fc_offset = _atoi(buf);
 
-    fc->fc_comps_buf[fc->count] = _atoi(buf);
+    printf("%d : %lld\n", fc->count, fc_offset);
 
-    fc->count++;
+    /* below 1s */
+    if(fc_offset < 1000){
+
+        fc->fc_comps_buf[fc->count] = fc_offset;
+
+        fc->count++;
+    
+    }
 
     if(fc->count >= fc->count_bound){
 
+        /* find min and max values to compute mean value of fc offset */
         fc->max = fc->fc_comps_buf[fc->sync_during_ignored];
         fc->min = fc->fc_comps_buf[fc->sync_during_ignored];
 
         for(i = fc->sync_during_ignored + 1; i < fc->count_bound; i++){
-         
+            
             /* max */
-            if(fc->fc_comps_buf[i] > fc->max)
-                fc->max = fc->fc_comps_buf[i];
+            //if(fc->fc_comps_buf[i] > fc->max)
+            //    fc->max = fc->fc_comps_buf[i];
                 
             /* min */
-            if(fc->fc_comps_buf[i] < fc->min)
-                fc->min = fc->fc_comps_buf[i];
+            //if(fc->fc_comps_buf[i] < fc->min)
+            //    fc->min = fc->fc_comps_buf[i];
+
+            /* mean */
+            tmp2 += fc->fc_comps_buf[i];
             
         }
 
-        tmp = (fc->max + fc->min) / 2.0;
-        printf("%d\n", abs(utf.Compenstate_FC_MC - tmp));
+        /* mean */
+        //tmp = (fc->max + fc->min) / 2.0;
+        tmp2 /= (fc->count_bound - fc->sync_during_ignored);
+        printf("%d\n", abs(utf.Compenstate_FC_MC - tmp2));
+
+        if(abs(tmp2) >= 1000)
+            *Compenstate_FC_MC = 0;
 
         /* Ignore below 5ms && The difference from the previous value must be more than 5*/
-        if(abs(tmp) > 5 && abs(utf.Compenstate_FC_MC - tmp) > 5)
+        if(abs(tmp2) > 5 && abs(utf.Compenstate_FC_MC - tmp2) > 5)
             /* need much consdiration */
-            *Compenstate_FC_MC += tmp;
+            *Compenstate_FC_MC += tmp2;
 
         printf("max : %lld, min : %lld\nCompenstate_FC_MC : %lf\n", fc->max, fc->min, *Compenstate_FC_MC);
 
@@ -364,7 +381,7 @@ int UDP_server(struct sockaddr_in *server_addr){
         
         strcpy(data, utf.msg.msg_iov->iov_base);
 
-        if(!strcmp("offset", data)){
+        if(!strcmp("offset", data)){ // same return 0
 
             /* Thread
             if(pthread_create(&p_thread, NULL, UDP_Thread, (void *)&utf) != 0)

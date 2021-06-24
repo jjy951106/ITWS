@@ -97,6 +97,5 @@ while True:
         start = time.time()
 
         print(f'enteredTime : {enteredTime}, sleepTime : {sendTerm - enteredTime}')
-
         
-        
+#test

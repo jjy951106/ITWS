@@ -43,7 +43,7 @@ typedef struct fc_offset{
     int64_t fc_comps_buf[30];
     int count;
     int count_bound;
-    int sync_during_ignored; /* Ignore the first 5 */
+    int sync_during_ignored; /* Ignore the first 5 (5 is default value) */
 }fc_offset;
 
 /* character -> number (custom) no limit size */
