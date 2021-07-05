@@ -121,7 +121,7 @@ void UDP_Function(void *args){
     int32_t comps_sec = (int32_t)(utf.Compenstate_FC_MC / 1000);
     int32_t comps_nsec = (int32_t)((utf.Compenstate_FC_MC - (int64_t)(utf.Compenstate_FC_MC / 1000) * 1000) * 1000000);
 
-    printf("Client IP : %s Port : %d\n", inet_ntoa(utf.from_addr.sin_addr), ntohs(utf.from_addr.sin_port));
+    printf("\nClient IP : %s Port : %d\n", inet_ntoa(utf.from_addr.sin_addr), ntohs(utf.from_addr.sin_port));
 
     /* T2 : T[0] server
        T3 : T[1] server */
@@ -163,7 +163,7 @@ void UDP_Function(void *args){
 
     sendto(utf.sock, T_int, sizeof(T_int), 0, (struct sockaddr*)&utf.from_addr, sizeof(utf.from_addr));
 
-    printf("\nT2: %ld.%ld\nT3: %ld.%ld\n\nCompenstate_FC_MC : %lfms, %ds, %dns\n", T[0].tv_sec, T[0].tv_nsec, T[1].tv_sec, T[1].tv_nsec, utf.Compenstate_FC_MC, comps_sec, comps_nsec); // time_t (long) : %ld long: %ld
+    printf("T2: %ld.%ld\nT3: %ld.%ld\nCompenstate_FC_MC : %.0lfms\n", T[0].tv_sec, T[0].tv_nsec, T[1].tv_sec, T[1].tv_nsec, utf.Compenstate_FC_MC); // time_t (long) : %ld long: %ld
 
     // printf("Compenstate_FC_MC : %lfms, %ds, %dns\n", utf.Compenstate_FC_MC, comps_sec, comps_nsec);
 
@@ -240,11 +240,13 @@ void UDP_FC_COMPS_Fuction(void *args, fc_offset *fc, char *buf, double *Compenst
     
     int i;
 
-    double tmp = 0, tmp2 = 0;
+    double tmp = 0, tmp2;
 
     int64_t offset_tmp = _atoi(buf);
 
-    printf("%d : %lld\n", fc->count, offset_tmp);
+    printf("\n-----------------------------------------\n");
+    printf("(fc count, fc offset) : (%d, %lldms)\n", fc->count+1, offset_tmp);
+    printf("-----------------------------------------\n");
 
     /* below 1s */
     if(offset_tmp < 1000){
@@ -260,6 +262,8 @@ void UDP_FC_COMPS_Fuction(void *args, fc_offset *fc, char *buf, double *Compenst
         /* find min and max values to compute mean value of fc offset */
         fc->max = fc->fc_comps_buf[fc->sync_during_ignored];
         fc->min = fc->fc_comps_buf[fc->sync_during_ignored];
+
+        tmp2 = fc->fc_comps_buf[fc->sync_during_ignored];
 
         for(i = fc->sync_during_ignored + 1; i < fc->count_bound; i++){
             
@@ -280,19 +284,21 @@ void UDP_FC_COMPS_Fuction(void *args, fc_offset *fc, char *buf, double *Compenst
         tmp = (fc->max + fc->min) / 2.0;
         tmp2 /= (fc->count_bound - fc->sync_during_ignored);
 
-        printf("%lf\n", abs(utf.Compenstate_FC_MC - tmp2));
+        //printf("%lf\n", fabs(utf.Compenstate_FC_MC - tmp2));
 
         /* 500ms 이상 차이 나는 것은 fc간 시간 오차가 기준치 5ms 보다 휠씬 큰 것임 동기화를 고려하게되면 오류가 생길 가능성이 큼, 따라서 고려하지 않는 것이 더 이로움 */
-        if(abs(tmp2) >= 500)
+        if(fabs(tmp2) >= 500)
             *Compenstate_FC_MC = 0;
 
         /* Ignore below 5ms && The difference from the previous value must be more than 5*/
-        else if(abs(tmp2) > 5 && abs(utf.Compenstate_FC_MC - tmp2) > 5)
+        else if(fabs(tmp2) > 5 && fabs(utf.Compenstate_FC_MC - tmp2) > 5)
             /* need much consdiration */
             *Compenstate_FC_MC += tmp2;
 
+        printf("\n-----------------------------------------\n");
         printf("max : %lld, min : %lld, mean : %lf\nCompenstate_FC_MC : %lf\n", fc->max, fc->min, tmp2, *Compenstate_FC_MC);
-
+        printf("-----------------------------------------\n");
+        
         memset(fc->fc_comps_buf, '\0', sizeof(fc->fc_comps_buf));
 
         fc->count = 0;
@@ -351,7 +357,7 @@ int TCP_server(struct sockaddr_in *server_addr){
 
 int UDP_server(struct sockaddr_in *server_addr){
 
-    fc_offset fc = {0, 0, {0}, 0, 5, 3};
+    fc_offset fc = {0, 0, {0}, 0, 30, 7};
 
     int enabled = 1;
 

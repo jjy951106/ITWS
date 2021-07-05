@@ -15,6 +15,8 @@
 #include <netinet/ip_icmp.h>
 #include <arpa/inet.h>
 
+#include <math.h>
+
 #define BACKLOG 100
 
 /* term between receive and transmit */
