@@ -87,9 +87,9 @@ while True:
         if sendTerm - enteredTime >= 0:
             time.sleep(sendTerm - enteredTime)
         
-        # more than 100ms companste gps time assumes gps sync problem and so this problem is ignored.
-        # if abs(tmp) < 100:
-        sock.sendto(str(tmp).encode(), ADDR)
+        # more than 1s companste gps time assumes gps sync problem and so this problem is ignored.
+        if abs(tmp) < 1000:
+            sock.sendto(str(tmp).encode(), ADDR)
         count = 0
         tmp = 0
         
