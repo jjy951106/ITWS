@@ -279,7 +279,8 @@ void UDP_FC_COMPS_Fuction(void *args, fc_offset *fc, char *buf, double *Compenst
         /* mean */
         tmp = (fc->max + fc->min) / 2.0;
         tmp2 /= (fc->count_bound - fc->sync_during_ignored);
-        printf("%d\n", abs(utf.Compenstate_FC_MC - tmp2));
+
+        printf("%lf\n", abs(utf.Compenstate_FC_MC - tmp2));
 
         /* 500ms 이상 차이 나는 것은 fc간 시간 오차가 기준치 5ms 보다 휠씬 큰 것임 동기화를 고려하게되면 오류가 생길 가능성이 큼, 따라서 고려하지 않는 것이 더 이로움 */
         if(abs(tmp2) >= 500)
@@ -290,7 +291,7 @@ void UDP_FC_COMPS_Fuction(void *args, fc_offset *fc, char *buf, double *Compenst
             /* need much consdiration */
             *Compenstate_FC_MC += tmp2;
 
-        printf("max : %lld, min : %lld, mean : %lld\nCompenstate_FC_MC : %lf\n", fc->max, fc->min, tmp2, *Compenstate_FC_MC);
+        printf("max : %lld, min : %lld, mean : %lf\nCompenstate_FC_MC : %lf\n", fc->max, fc->min, tmp2, *Compenstate_FC_MC);
 
         memset(fc->fc_comps_buf, '\0', sizeof(fc->fc_comps_buf));
 
