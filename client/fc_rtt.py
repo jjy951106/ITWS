@@ -39,10 +39,19 @@ while(connection is False):
         connectionIndex = connectionIndex + 1
         pass
 
-# Interval initialize
-fc_port.mav.request_data_stream_send( fc_port.target_system, fc_port.target_system, 0, 5, 1 )            
+fc_port.mav.param_set_send( fc_port.target_system, fc_port.target_component, b'BRD_RTC_TYPES', 2, mavutil.mavlink.MAV_PARAM_TYPE_INT32 ) # Ardupilot
 
-fc_port.mav.param_set_send('BRD_RTC_TYPES', 2, None, 1, 1) # Ardupilot
+fc_port.mav.param_request_read_send( fc_port.target_system, fc_port.target_component, b'BRD_RTC_TYPES', -1 )
+time.sleep(2)
+try:
+    message = fc_port.recv_match(type='PARAM_VALUE', blocking=True).to_dict()
+    print(message['param_id'], message['param_value'])
+except Exception as e:
+    print(e)
+    exit(0)
+
+# Interval initialize
+fc_port.mav.request_data_stream_send( fc_port.target_system, fc_port.target_system, 0, 5, 1 ) 
 
 # Set FC time
 while True:
