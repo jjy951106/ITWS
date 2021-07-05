@@ -24,7 +24,7 @@ while(connection is False):
             fc_port = mavutil.mavlink_connection("/dev/ttyACM0") # /dev/ttyACM0 or /dev/ttyACM1
         elif connectionIndex == 2:
             print('2')
-            print(mavutil.mavlink_connection("/dev/ttyACM1"))
+            fc_port = mavutil.mavlink_connection("/dev/ttyACM1")
         elif connectionIndex == 3:
             print('3')
             fc_port = mavutil.mavlink_connection("/dev/ttyAMA0")
@@ -42,7 +42,7 @@ while(connection is False):
 # Interval initialize
 fc_port.mav.request_data_stream_send( fc_port.target_system, fc_port.target_system, 0, 5, 1 )            
 
-# fc_port.mav.param_set_send('BRD_RTC_TYPES', 2) # Ardupilot
+fc_port.mav.param_set_send('BRD_RTC_TYPES', 2, None, 1, 1) # Ardupilot
 
 # Set FC time
 while True:
