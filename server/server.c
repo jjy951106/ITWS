@@ -290,7 +290,7 @@ void UDP_FC_COMPS_Fuction(void *args, fc_offset *fc, char *buf, double *Compenst
             /* need much consdiration */
             *Compenstate_FC_MC += tmp2;
 
-        printf("max : %lld, min : %lld\nCompenstate_FC_MC : %lf\n", fc->max, fc->min, *Compenstate_FC_MC);
+        printf("max : %lld, min : %lld, mean : %lld\nCompenstate_FC_MC : %lf\n", fc->max, fc->min, tmp2, *Compenstate_FC_MC);
 
         memset(fc->fc_comps_buf, '\0', sizeof(fc->fc_comps_buf));
 
