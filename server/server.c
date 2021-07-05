@@ -245,7 +245,7 @@ void UDP_FC_COMPS_Fuction(void *args, fc_offset *fc, char *buf, double *Compenst
     int64_t offset_tmp = _atoi(buf);
 
     printf("\n-----------------------------------------\n");
-    printf("(fc count, fc offset) : (%d, %lldms)\n", fc->count+1, offset_tmp);
+    printf("(count, fc offset) : (%d, %lldms)\n", fc->count+1, offset_tmp);
     printf("-----------------------------------------\n");
 
     /* below 1s */
@@ -296,7 +296,7 @@ void UDP_FC_COMPS_Fuction(void *args, fc_offset *fc, char *buf, double *Compenst
             *Compenstate_FC_MC += tmp2;
 
         printf("\n-----------------------------------------\n");
-        printf("max : %lld, min : %lld, mean : %lf\nCompenstate_FC_MC : %lf\n", fc->max, fc->min, tmp2, *Compenstate_FC_MC);
+        printf("(max, min, mean) : (%lldms, %lldms, %.1lfms)\nCompenstate_FC_MC : %.1lfms\n", fc->max, fc->min, tmp2, *Compenstate_FC_MC);
         printf("-----------------------------------------\n");
         
         memset(fc->fc_comps_buf, '\0', sizeof(fc->fc_comps_buf));
