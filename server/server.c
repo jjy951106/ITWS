@@ -264,12 +264,12 @@ void UDP_FC_COMPS_Fuction(void *args, fc_offset *fc, char *buf, double *Compenst
         for(i = fc->sync_during_ignored + 1; i < fc->count_bound; i++){
             
             /* max */
-            //if(fc->fc_comps_buf[i] > fc->max)
-            //    fc->max = fc->fc_comps_buf[i];
+            if(fc->fc_comps_buf[i] > fc->max)
+                fc->max = fc->fc_comps_buf[i];
                 
             /* min */
-            //if(fc->fc_comps_buf[i] < fc->min)
-            //    fc->min = fc->fc_comps_buf[i];
+            if(fc->fc_comps_buf[i] < fc->min)
+                fc->min = fc->fc_comps_buf[i];
 
             /* mean */
             tmp2 += fc->fc_comps_buf[i];
@@ -277,7 +277,7 @@ void UDP_FC_COMPS_Fuction(void *args, fc_offset *fc, char *buf, double *Compenst
         }
 
         /* mean */
-        //tmp = (fc->max + fc->min) / 2.0;
+        tmp = (fc->max + fc->min) / 2.0;
         tmp2 /= (fc->count_bound - fc->sync_during_ignored);
         printf("%d\n", abs(utf.Compenstate_FC_MC - tmp2));
 

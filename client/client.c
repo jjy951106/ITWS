@@ -189,7 +189,7 @@ void iterative_offset_calculated(int sock, int32_t *offset, struct sockaddr_in *
     }
     //printf("iteration : %d \n", iteration);
 
-    /* minimum of iterations within adatative deviations is more than 5 in total 10 */
+    /* minimum of iterations within adaptative deviations is more than 5 in total 10 */
     if(iteration >= 3){ 
         offset[0] /= iteration;
         offset[1] /= iteration;
