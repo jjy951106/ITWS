@@ -28,12 +28,12 @@ sock = socket(AF_INET, SOCK_DGRAM)
 
 while(settings['connection'] is False):
     try:
-        fc_port = mavutil.mavlink_connection(settings['connectionLink'][connectionIndex]) # /dev/ttyACM0 or /dev/ttyACM1
+        fc_port = mavutil.mavlink_connection(settings['ConnectionLink'][connectionIndex]) # /dev/ttyACM0 or /dev/ttyACM1
         settings['connection'] = True
-        print(f'Success OpenLink {settings['connectionLink'][connectionIndex]}')
+        print(f'Success OpenLink {settings['ConnectionLink'][connectionIndex]}')
     except:
         connectionIndex = connectionIndex + 1
-        if connectionIndex == len(connectionLink): connectionIndex = 0
+        if connectionIndex == len(settings['ConnectionLink']): connectionIndex = 0
         pass
 
 fc_port.mav.param_set_send( fc_port.target_system, fc_port.target_component, b'BRD_RTC_TYPES',\
