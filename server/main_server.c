@@ -6,8 +6,6 @@ int main(int argc, char *argv[]){
   
   int protocol = 0;/* filename port */
 
-  char* intial = "initialization";
-
   memset(&server_addr, '\0', sizeof(server_addr));
 
   server_addr.sin_family = AF_INET;
