@@ -1,2 +1,1 @@
 # ITWS
-make all
