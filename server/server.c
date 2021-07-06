@@ -248,14 +248,8 @@ void UDP_FC_COMPS_Fuction(void *args, fc_offset *fc, char *buf, double *Compenst
     printf("(count, fc offset) : (%d, %lldms)\n", fc->count+1, offset_tmp);
     printf("-----------------------------------------\n");
 
-    /* below 1s */
-    if(offset_tmp < 1000){
-
-        fc->fc_comps_buf[fc->count] = offset_tmp;
-
-        fc->count++;
-    
-    }
+    fc->fc_comps_buf[fc->count] = offset_tmp;
+    fc->count++;
 
     if(fc->count >= fc->count_bound){
 
@@ -284,10 +278,8 @@ void UDP_FC_COMPS_Fuction(void *args, fc_offset *fc, char *buf, double *Compenst
         tmp = (fc->max + fc->min) / 2.0;
         tmp2 /= (fc->count_bound - fc->sync_during_ignored);
 
-        //printf("%lf\n", fabs(utf.Compenstate_FC_MC - tmp2));
-
-        /* 500ms 이상 차이 나는 것은 fc간 시간 오차가 기준치 5ms 보다 휠씬 큰 것임 동기화를 고려하게되면 오류가 생길 가능성이 큼, 따라서 고려하지 않는 것이 더 이로움 */
-        if(fabs(tmp2) >= 500)
+        /* 500ms 이상의 축적된 보상시간은 fc간 시간 오차가 기준치 5ms 보다 휠씬 큰 것임 동기화를 고려하게되면 오류가 생길 가능성이 큼, 따라서 고려하지 않는 것이 더 이로움 */
+        if(fabs(*Compenstate_FC_MC) >= 500)
             *Compenstate_FC_MC = 0;
 
         /* Ignore below 5ms && The difference from the previous value must be more than 5*/
