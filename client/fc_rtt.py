@@ -5,37 +5,39 @@ from datetime import datetime as dt
 import time
 from socket import *
 
-from MAVProxy.modules.lib import mp_module
-from MAVProxy.modules.mavproxy_timesync import *
+settings = {
+    
+    'HOST' : '1.239.197.74', # default
+    'PORT' : 5005,
+    
+    'Connection' : False,
+    'ConnectionLink' : ['/dev/ttyACM0', '/dev/ttyACM1', '/dev/ttyAMA0',\
+                        '/dev/serial0', '/dev/serial1', 'COM6'],
+    
+    'DataRate' : 2,
+    
+    'TransmitPacket' : 10,
+    'sendTerm' : 5,
+    'BRD_RTC_TYPES' : 3,
+    
+}
 
-HOST = "1.239.197.74" # 1.239.197.74
-PORT = 5005
-ADDR = (HOST, PORT)
-connection = False
-connectionLink = ['/dev/ttyACM0', '/dev/ttyACM1', '/dev/ttyAMA0',\
-                  '/dev/serial0', '/dev/serial1', 'COM6']
-connectionIndex = 0
-
-print(len(connectionLink))
-
-count = tmp = fc_lt = 0
-N = 10 # this is needed to reduce
-sendTerm = 5 # second
+count = connectionIndex = tmp = fc_lt = 0
 
 sock = socket(AF_INET, SOCK_DGRAM)
 
-while(connection is False):
+while(settings['connection'] is False):
     try:
-        fc_port = mavutil.mavlink_connection(connectionLink[connectionIndex]) # /dev/ttyACM0 or /dev/ttyACM1
-        connection = True
-        print(f'open link {connectionLink[connectionIndex]}')
+        fc_port = mavutil.mavlink_connection(settings['connectionLink'][connectionIndex]) # /dev/ttyACM0 or /dev/ttyACM1
+        settings['connection'] = True
+        print(f'Success OpenLink {settings['connectionLink'][connectionIndex]}')
     except:
         connectionIndex = connectionIndex + 1
-        if connectionIndex == len(connectionLink):
-            connectionIndex = 0
+        if connectionIndex == len(connectionLink): connectionIndex = 0
         pass
 
-fc_port.mav.param_set_send( fc_port.target_system, fc_port.target_component, b'BRD_RTC_TYPES', 3, mavutil.mavlink.MAV_PARAM_TYPE_INT32 ) # Ardupilot
+fc_port.mav.param_set_send( fc_port.target_system, fc_port.target_component, b'BRD_RTC_TYPES',\
+                            settings['BRD_RTC_TYPES'], mavutil.mavlink.MAV_PARAM_TYPE_INT32 ) # for Ardupilot
 
 fc_port.mav.param_request_read_send( fc_port.target_system, fc_port.target_component, b'BRD_RTC_TYPES', -1 )
 time.sleep(2)
@@ -48,21 +50,14 @@ except Exception as e:
     exit(0)
 
 # Interval initialize
-fc_port.mav.request_data_stream_send( fc_port.target_system, fc_port.target_system, 0, 2, 1 ) # high rate is fast and means 1/second
+fc_port.mav.request_data_stream_send( fc_port.target_system, fc_port.target_system, 0, settings['DataRate'], 1 )
 
 # Set FC time
 while True:
 
     fc_port.mav.system_time_send( int(time.time() * 1e6) , 0 )
-    
-    # print(msg.get_type())
-    # print(int(time.time() * 1e6)) # us
-    # print(int(time.time() * 1e9)) # ns
-    
     msg = fc_port.recv_match(type='SYSTEM_TIME',blocking=True)
-    
     print(f'msg_time : {msg.time_unix_usec}')
-  
     if msg.time_unix_usec > 10: break    
 
 start = time.time()
@@ -82,7 +77,6 @@ while True:
         rx_time = dt.timestamp(dt.now())
         if fc_lt != 0: fc_lt = (fc_lt + (rx_time - tx_time) / 2 ) / 2
         else: fc_lt = (rx_time - tx_time) / 2 
-
     # print("fc_lt : {}, rx_time : {}, tx_time : {}".format(fc_lt, rx_time, tx_time))
 
     # System time message reception
@@ -105,7 +99,7 @@ while True:
         
         # more than 200ms companste gps time assumes gps sync problem and so this problem is ignored.
         if abs(tmp) < 200:
-            sock.sendto(str(tmp).encode(), ADDR)
+            sock.sendto(str(tmp).encode(), (settings['HOST'], settings['PORT']))
         count = 0
         tmp = 0
         
