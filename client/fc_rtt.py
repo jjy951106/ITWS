@@ -82,8 +82,6 @@ while True:
     # Send timesync
     tx_time = dt.timestamp(dt.now())
     
-    print(tx_time)
-    
     fc_port.mav.timesync_send(0, int( tx_time ))
 
     # Time sync message reception
@@ -103,9 +101,9 @@ while True:
     fc_time = float( msg.time_unix_usec / 1e6 )
     fc_offset = int( ( (fc_time + fc_lt) - now ) * 1000 )
     
-    print("\n----------------------------------------------------------------------------\n")
+    print("\n----------------------------------------------------------------------------")
     print("msg : {}\nfc_time : {}\nfc_offset : {}\nnow : {}".format(msg, fc_time, fc_offset, now))
-    print("\n----------------------------------------------------------------------------\n")
+    print("----------------------------------------------------------------------------\n")
     
     # send ms measure
     count = count + 1
