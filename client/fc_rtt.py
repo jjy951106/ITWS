@@ -5,6 +5,9 @@ from datetime import datetime as dt
 import time
 from socket import *
 
+from MAVProxy.modules.lib import mp_module
+from MAVProxy.modules.mavproxy_timesync import *
+
 HOST = "1.239.197.74" # 1.239.197.74
 PORT = 5005
 ADDR = (HOST, PORT)
@@ -31,18 +34,22 @@ while(connection is False):
         elif connectionIndex == 4:
             print('4')
             fc_port = mavutil.mavlink_connection("/dev/serial0") # USB0
-        else:
+        elif connectionIndex == 5:
             print('5')
-            fc_port = mavutil.mavlink_connection("/dev/serial1") # USB1
+            fc_port = mavutil.mavlink_connection("/dev/serial1") # USB0
+        else:
+            print('6')
+            fc_port = mavutil.mavlink_connection("COM6") # USB1
         connection = True
     except:
         connectionIndex = connectionIndex + 1
         pass
 
-fc_port.mav.param_set_send( fc_port.target_system, fc_port.target_component, b'BRD_RTC_TYPES', 2, mavutil.mavlink.MAV_PARAM_TYPE_INT32 ) # Ardupilot
+fc_port.mav.param_set_send( fc_port.target_system, fc_port.target_component, b'BRD_RTC_TYPES', 7, mavutil.mavlink.MAV_PARAM_TYPE_INT32 ) # Ardupilot
 
 fc_port.mav.param_request_read_send( fc_port.target_system, fc_port.target_component, b'BRD_RTC_TYPES', -1 )
 time.sleep(2)
+
 try:
     message = fc_port.recv_match(type='PARAM_VALUE', blocking=True).to_dict()
     print(message['param_id'], message['param_value'])
@@ -51,15 +58,37 @@ except Exception as e:
     exit(0)
 
 # Interval initialize
-fc_port.mav.request_data_stream_send( fc_port.target_system, fc_port.target_system, 0, 5, 1 ) 
+fc_port.mav.request_data_stream_send( fc_port.target_system, fc_port.target_system, 0, 5, 1 ) # high rate is fast and means 1/second
 
 # Set FC time
 while True:
 
-    fc_port.mav.system_time_send( int( dt.timestamp(dt.now()) * 1e6 ) , 0 )
+    #fc_port.mav.system_time_send( int(time.time() * 1e6) , 0 )
+    
+    #time_msg = fc_port.messages['GPS_RAW_INT']
+    
+    #time_msg.time_usec = int(time.time() * 1e6)
+    
+    #mavutil.mavfile.post_message(fc_port, time_msg)
+    
+    # print(msg.get_type())
+    
+    #fc_port.post_message(fc_port.messages['GPS_RAW_INT'])
+    # print(int(time.time() * 1e6)) # us
+    # print(int(time.time() * 1e9)) # ns
+    
+    #print(fc_port.messages['GPS_RAW_INT'].time_usec)
+    #print(fc_port.time_since('GPS_RAW_INT'))
+    
     msg = fc_port.recv_match(type='SYSTEM_TIME',blocking=True)
-    # print(msg.time_unix_usec)
-    if msg.time_unix_usec > 10: break    
+    
+    print(f'msg_time : {msg.time_unix_usec}')
+    
+    fc_port.file.write( int(time.time() * 1e6), 0 )
+    
+    mavutil.mavfile.post_message(fc_port, msg)
+  
+    # if msg.time_unix_usec > 10: break    
 
 start = time.time()
 
@@ -67,6 +96,9 @@ while True:
 
     # Send timesync
     tx_time = dt.timestamp(dt.now())
+    
+    print(tx_time)
+    
     fc_port.mav.timesync_send(0, int( tx_time ))
 
     # Time sync message reception
@@ -82,7 +114,7 @@ while True:
 
     # System time message reception
     msg = fc_port.recv_match(type='SYSTEM_TIME',blocking=True)
-    now = float( dt.timestamp( dt.now() ) )
+    now = float( dt.timestamp( dt.now() ) - fc_port.time_since('SYSTEM_TIME') ) # 메세지를 받은 이후로의 시간을 보정
     fc_time = float( msg.time_unix_usec / 1e6 )
     fc_offset = int( ( (fc_time + fc_lt) - now ) * 1000 )
     
