@@ -1,0 +1,2 @@
+# ITWS server
+make server
