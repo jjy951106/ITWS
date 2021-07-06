@@ -12,7 +12,9 @@ HOST = "1.239.197.74" # 1.239.197.74
 PORT = 5005
 ADDR = (HOST, PORT)
 connection = False
-connectionIndex = 1
+connectionLink = ['/dev/ttyACM0', '/dev/ttyACM1', '/dev/ttyAMA0',\
+                  '/dev/serial0', '/dev/serial1', 'COM6']
+connectionIndex = 0
 
 count = tmp = fc_lt = 0
 N = 10 # this is needed to reduce
@@ -22,27 +24,13 @@ sock = socket(AF_INET, SOCK_DGRAM)
 
 while(connection is False):
     try:
-        if connectionIndex == 1:
-            print('1')
-            fc_port = mavutil.mavlink_connection("/dev/ttyACM0") # /dev/ttyACM0 or /dev/ttyACM1
-        elif connectionIndex == 2:
-            print('2')
-            fc_port = mavutil.mavlink_connection("/dev/ttyACM1")
-        elif connectionIndex == 3:
-            print('3')
-            fc_port = mavutil.mavlink_connection("/dev/ttyAMA0")
-        elif connectionIndex == 4:
-            print('4')
-            fc_port = mavutil.mavlink_connection("/dev/serial0") # USB0
-        elif connectionIndex == 5:
-            print('5')
-            fc_port = mavutil.mavlink_connection("/dev/serial1") # USB0
-        else:
-            print('6')
-            fc_port = mavutil.mavlink_connection("COM6") # USB1
+        fc_port = mavutil.mavlink_connection(connectionLink[connectionIndex]) # /dev/ttyACM0 or /dev/ttyACM1
         connection = True
+        print(f'open link {connectionLink[connectionIndex]}')
     except:
         connectionIndex = connectionIndex + 1
+        if connectionIndex == len(connectionLink):
+            connectionIndex = 0
         pass
 
 fc_port.mav.param_set_send( fc_port.target_system, fc_port.target_component, b'BRD_RTC_TYPES', 3, mavutil.mavlink.MAV_PARAM_TYPE_INT32 ) # Ardupilot
@@ -122,5 +110,4 @@ while True:
         # startTime initialization
         start = time.time()
 
-        print(f'(Transmission Packet, Interval) : ({N}, {sendTerm})\n\
-              (enteredTime, sleepTime) : ({enteredTime}, {sendTerm - enteredTime})')
+        print(f'(Transmission Packet, Interval) : ({N}, {sendTerm})\n(enteredTime, sleepTime) : ({enteredTime}, {sendTerm - enteredTime})')
