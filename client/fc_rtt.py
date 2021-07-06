@@ -93,7 +93,7 @@ while True:
         if fc_lt != 0: fc_lt = (fc_lt + (rx_time - tx_time) / 2 ) / 2
         else: fc_lt = (rx_time - tx_time) / 2 
 
-    print("fc_lt : {}, rx_time : {}, tx_time : {}".format(fc_lt, rx_time, tx_time))
+    # print("fc_lt : {}, rx_time : {}, tx_time : {}".format(fc_lt, rx_time, tx_time))
 
     # System time message reception
     msg = fc_port.recv_match(type='SYSTEM_TIME',blocking=True)
@@ -113,8 +113,8 @@ while True:
         if sendTerm - enteredTime >= 0:
             time.sleep(sendTerm - enteredTime)
         
-        # more than 1s companste gps time assumes gps sync problem and so this problem is ignored.
-        if abs(tmp) < 1000:
+        # more than 200ms companste gps time assumes gps sync problem and so this problem is ignored.
+        if abs(tmp) < 200:
             sock.sendto(str(tmp).encode(), ADDR)
         count = 0
         tmp = 0
