@@ -122,4 +122,5 @@ while True:
         # startTime initialization
         start = time.time()
 
-        print(f'{N} packet Transmission\n(enteredTime, sleepTime) : ({enteredTime}, {sendTerm - enteredTime})')
+        print(f'(Transmission Packet, Interval) : ({N}, {sendTerm})\n...
+              (enteredTime, sleepTime) : ({enteredTime}, {sendTerm - enteredTime})')
