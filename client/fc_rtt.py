@@ -101,4 +101,5 @@ while True:
         # startTime initialization
         start = time.time()
 
-        print(f'(Transmission Packet, Interval) : ({N}, {settings['SendTerm']})\n(enteredTime, sleepTime) : ({enteredTime}, {settings['SendTerm'] - enteredTime})')
+        print('(Transmission Packet, Interval) : ({}, {})\n(enteredTime, sleepTime) : ({}, {})'\
+              .format(N, settings['SendTerm'], enteredTime, settings['SendTerm'] - enteredTime))
