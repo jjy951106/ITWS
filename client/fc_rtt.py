@@ -45,7 +45,7 @@ while(connection is False):
         connectionIndex = connectionIndex + 1
         pass
 
-fc_port.mav.param_set_send( fc_port.target_system, fc_port.target_component, b'BRD_RTC_TYPES', 7, mavutil.mavlink.MAV_PARAM_TYPE_INT32 ) # Ardupilot
+fc_port.mav.param_set_send( fc_port.target_system, fc_port.target_component, b'BRD_RTC_TYPES', 3, mavutil.mavlink.MAV_PARAM_TYPE_INT32 ) # Ardupilot
 
 fc_port.mav.param_request_read_send( fc_port.target_system, fc_port.target_component, b'BRD_RTC_TYPES', -1 )
 time.sleep(2)
@@ -58,37 +58,22 @@ except Exception as e:
     exit(0)
 
 # Interval initialize
-fc_port.mav.request_data_stream_send( fc_port.target_system, fc_port.target_system, 0, 5, 1 ) # high rate is fast and means 1/second
+fc_port.mav.request_data_stream_send( fc_port.target_system, fc_port.target_system, 0, 2, 1 ) # high rate is fast and means 1/second
 
 # Set FC time
 while True:
 
-    #fc_port.mav.system_time_send( int(time.time() * 1e6) , 0 )
-    
-    #time_msg = fc_port.messages['GPS_RAW_INT']
-    
-    #time_msg.time_usec = int(time.time() * 1e6)
-    
-    #mavutil.mavfile.post_message(fc_port, time_msg)
+    fc_port.mav.system_time_send( int(time.time() * 1e6) , 0 )
     
     # print(msg.get_type())
-    
-    #fc_port.post_message(fc_port.messages['GPS_RAW_INT'])
     # print(int(time.time() * 1e6)) # us
     # print(int(time.time() * 1e9)) # ns
-    
-    #print(fc_port.messages['GPS_RAW_INT'].time_usec)
-    #print(fc_port.time_since('GPS_RAW_INT'))
     
     msg = fc_port.recv_match(type='SYSTEM_TIME',blocking=True)
     
     print(f'msg_time : {msg.time_unix_usec}')
-    
-    fc_port.file.write( int(time.time() * 1e6), 0 )
-    
-    mavutil.mavfile.post_message(fc_port, msg)
   
-    # if msg.time_unix_usec > 10: break    
+    if msg.time_unix_usec > 10: break    
 
 start = time.time()
 
@@ -108,13 +93,13 @@ while True:
     else:
         rx_time = dt.timestamp(dt.now())
         if fc_lt != 0: fc_lt = (fc_lt + (rx_time - tx_time) / 2 ) / 2
-        else: fc_lt = (rx_time - tx_time) / 2
+        else: fc_lt = (rx_time - tx_time) / 2 
 
     print("fc_lt : {}, rx_time : {}, tx_time : {}".format(fc_lt, rx_time, tx_time))
 
     # System time message reception
     msg = fc_port.recv_match(type='SYSTEM_TIME',blocking=True)
-    now = float( dt.timestamp( dt.now() ) - fc_port.time_since('SYSTEM_TIME') ) # 메세지를 받은 이후로의 시간을 보정
+    now = float( dt.timestamp( dt.now() ) - fc_port.time_since('SYSTEM_TIME') )
     fc_time = float( msg.time_unix_usec / 1e6 )
     fc_offset = int( ( (fc_time + fc_lt) - now ) * 1000 )
     
