@@ -6,20 +6,15 @@ import time
 from socket import *
 
 settings = {
-    
     'HOST' : '1.239.197.74', # default
     'PORT' : 5005,
-    
     'Connection' : False,
     'ConnectionLink' : ['/dev/ttyACM0', '/dev/ttyACM1', '/dev/ttyAMA0',\
                         '/dev/serial0', '/dev/serial1', 'COM6'],
-    
     'DataRate' : 2,
-    
     'TransmitPacket' : 10,
     'sendTerm' : 5,
     'BRD_RTC_TYPES' : 3,
-    
 }
 
 count = connectionIndex = tmp = fc_lt = 0
@@ -30,7 +25,7 @@ while(settings['connection'] is False):
     try:
         fc_port = mavutil.mavlink_connection(settings['ConnectionLink'][connectionIndex]) # /dev/ttyACM0 or /dev/ttyACM1
         settings['connection'] = True
-        print(f'Success OpenLink {settings['ConnectionLink'][connectionIndex]}')
+        #print(f'Success OpenLink {settings['ConnectionLink'][connectionIndex]}')
     except:
         connectionIndex = connectionIndex + 1
         if connectionIndex == len(settings['ConnectionLink']): connectionIndex = 0
