@@ -103,7 +103,9 @@ while True:
     fc_time = float( msg.time_unix_usec / 1e6 )
     fc_offset = int( ( (fc_time + fc_lt) - now ) * 1000 )
     
+    print("\n----------------------------------------------------------------------------\n")
     print("msg : {}\nfc_time : {}\nfc_offset : {}\nnow : {}".format(msg, fc_time, fc_offset, now))
+    print("\n----------------------------------------------------------------------------\n")
     
     # send ms measure
     count = count + 1
