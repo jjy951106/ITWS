@@ -6,26 +6,24 @@ import time
 from socket import *
 
 settings = {
-    'HOST' : '1.239.197.74', # default
-    'PORT' : 5005,
-    'Connection' : False,
+    'HOST'           : '1.239.197.74', # default
+    'PORT'           : 5005,
+    'Connection'     : False,
     'ConnectionLink' : ['/dev/ttyACM0', '/dev/ttyACM1', '/dev/ttyAMA0',\
                         '/dev/serial0', '/dev/serial1', 'COM6'],
-    'DataRate' : 2,
+    'DataRate'       : 2,
     'TransmitPacket' : 10,
-    'SendTerm' : 5,
-    'BRD_RTC_TYPES' : 3,
+    'SendTerm'       : 5,
+    'BRD_RTC_TYPES'  : 3,              # GPS, MAVLINK
 }
 
 count = connectionIndex = tmp = fc_lt = 0
 
-sock = socket(AF_INET, SOCK_DGRAM)
-
 while(settings['Connection'] is False):
     try:
-        fc_port = mavutil.mavlink_connection(settings['ConnectionLink'][connectionIndex]) # /dev/ttyACM0 or /dev/ttyACM1
-        settings['connection'] = True
-        #print(f'Success OpenLink {settings['ConnectionLink'][connectionIndex]}')
+        fc_port = mavutil.mavlink_connection(settings['ConnectionLink'][connectionIndex])
+        settings['Connection'] = True
+        print('Success OpenLink {}'.format(settings['ConnectionLink'][connectionIndex]))
     except:
         connectionIndex = connectionIndex + 1
         if connectionIndex == len(settings['ConnectionLink']): connectionIndex = 0
@@ -54,6 +52,8 @@ while True:
     msg = fc_port.recv_match(type='SYSTEM_TIME',blocking=True)
     print(f'msg_time : {msg.time_unix_usec}')
     if msg.time_unix_usec > 10: break    
+    
+sock = socket(AF_INET, SOCK_DGRAM)
 
 start = time.time()
 
@@ -86,8 +86,8 @@ while True:
     
     # send ms measure
     count = count + 1
-    tmp = tmp + (fc_offset / N)
-    if count is N:
+    tmp = tmp + (fc_offset / settings['TransmitPacket'])
+    if count is settings['TransmitPacket']:
         enteredTime = time.time() - start
         if settings['SendTerm'] - enteredTime >= 0:
             time.sleep(settings['SendTerm'] - enteredTime)
@@ -101,5 +101,5 @@ while True:
         # startTime initialization
         start = time.time()
 
-        print('(Transmission Packet, Interval) : ({}, {})\n(enteredTime, sleepTime) : ({}, {})'\
-              .format(N, settings['SendTerm'], enteredTime, settings['SendTerm'] - enteredTime))
+        print('(Transmission Packet, Interval) : ({}, {}s)\n(EnteredTime, SleepTime) : ({:.3f}, {:.3f})'\
+              .format(settings['TransmitPacket'], settings['SendTerm'], enteredTime, settings['SendTerm'] - enteredTime))
