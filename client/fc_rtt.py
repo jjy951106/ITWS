@@ -13,7 +13,7 @@ settings = {
                         '/dev/serial0', '/dev/serial1', 'COM6'],
     'DataRate' : 2,
     'TransmitPacket' : 10,
-    'sendTerm' : 5,
+    'SendTerm' : 5,
     'BRD_RTC_TYPES' : 3,
 }
 
@@ -21,7 +21,7 @@ count = connectionIndex = tmp = fc_lt = 0
 
 sock = socket(AF_INET, SOCK_DGRAM)
 
-while(settings['connection'] is False):
+while(settings['Connection'] is False):
     try:
         fc_port = mavutil.mavlink_connection(settings['ConnectionLink'][connectionIndex]) # /dev/ttyACM0 or /dev/ttyACM1
         settings['connection'] = True
@@ -89,8 +89,8 @@ while True:
     tmp = tmp + (fc_offset / N)
     if count is N:
         enteredTime = time.time() - start
-        if sendTerm - enteredTime >= 0:
-            time.sleep(sendTerm - enteredTime)
+        if settings['SendTerm'] - enteredTime >= 0:
+            time.sleep(settings['SendTerm'] - enteredTime)
         
         # more than 200ms companste gps time assumes gps sync problem and so this problem is ignored.
         if abs(tmp) < 200:
@@ -101,4 +101,4 @@ while True:
         # startTime initialization
         start = time.time()
 
-        print(f'(Transmission Packet, Interval) : ({N}, {sendTerm})\n(enteredTime, sleepTime) : ({enteredTime}, {sendTerm - enteredTime})')
+        print(f'(Transmission Packet, Interval) : ({N}, {settings['SendTerm']})\n(enteredTime, sleepTime) : ({enteredTime}, {settings['SendTerm'] - enteredTime})')
