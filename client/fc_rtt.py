@@ -12,9 +12,11 @@ HOST = "1.239.197.74" # 1.239.197.74
 PORT = 5005
 ADDR = (HOST, PORT)
 connection = False
-connectionLink = ['/dev/ttyAMA0',\
-                  '/dev/serial0', '/dev/serial1', 'COM6','/dev/ttyACM0', '/dev/ttyACM1', ]
+connectionLink = ['/dev/ttyACM0', '/dev/ttyACM1', '/dev/ttyAMA0',\
+                  '/dev/serial0', '/dev/serial1', 'COM6']
 connectionIndex = 0
+
+print(len(connectionLink))
 
 count = tmp = fc_lt = 0
 N = 10 # this is needed to reduce
