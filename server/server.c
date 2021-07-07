@@ -163,14 +163,14 @@ void UDP_FC_COMPS_Fuction(void *args, fc_offset *fc, char *buf, double *Compenst
         tmp = (fc->max + fc->min) / 2.0;
         tmp2 /= (fc->count_bound - fc->sync_during_ignored);
 
+        /* Ignore below 5ms && The difference from the previous value must be more than 5*/
+        if(fabs(tmp2) > 5 && fabs(utf.Compenstate_FC_MC - tmp2) > 5)
+            /* need much consdiration */
+            *Compenstate_FC_MC += tmp2;
+
         /* 500ms 이상의 축적된 보상시간은 fc간 시간 오차가 기준치 5ms 보다 휠씬 큰 것임 동기화를 고려하게되면 오류가 생길 가능성이 큼, 따라서 고려하지 않는 것이 더 이로움 */
         if(fabs(*Compenstate_FC_MC) >= 500)
             *Compenstate_FC_MC = 0;
-
-        /* Ignore below 5ms && The difference from the previous value must be more than 5*/
-        else if(fabs(tmp2) > 5 && fabs(utf.Compenstate_FC_MC - tmp2) > 5)
-            /* need much consdiration */
-            *Compenstate_FC_MC += tmp2;
 
         printf("\n-----------------------------------------\n");
         printf("(max, min, mean) : (%lldms, %lldms, %.1lfms)\nCompenstate_FC_MC : %.1lfms\n", fc->max, fc->min, tmp2, *Compenstate_FC_MC);
