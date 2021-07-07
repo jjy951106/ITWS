@@ -21,10 +21,14 @@ int main(int argc, char *argv[]){
     return 0;
   }
   
+  UDP_server(&server_addr);
+
+  /*
   if (protocol == 0)
     UDP_server(&server_addr);
   else
     TCP_server(&server_addr);
+  */
 
   return 0;
 }
