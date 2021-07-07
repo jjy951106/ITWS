@@ -16,4 +16,4 @@ while True:
     print(tmp)
     # sock.sendto(str(tmp).encode(), (settings['HOST'], settings['PORT']))
     sock.sendto(tmp.encode(), (settings['HOST'], settings['PORT']))
-    time.sleep(0.2)
+    time.sleep(1)

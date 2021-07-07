@@ -216,8 +216,10 @@ int UDP_server(struct sockaddr_in *server_addr){
 
     while(recv_socket(utf.sock, &utf.msg, &utf.from_addr) > 0){
         
-        strcpy(data, utf.msg.msg_iov->iov_base);
+        memset(data, '\0', sizeof(data));
 
+        strcpy(data, utf.msg.msg_iov->iov_base);
+        
         printf("%s\n", data);
 
         /* same return 0 */
