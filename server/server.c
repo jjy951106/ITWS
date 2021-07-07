@@ -218,7 +218,7 @@ int UDP_server(struct sockaddr_in *server_addr){
         
         strcpy(data, utf.msg.msg_iov->iov_base);
 
-        printf('%s\n', data);
+        printf("%s\n", data);
 
         /* same return 0 */
         if(!strcmp("offset", data))
