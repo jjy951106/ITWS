@@ -215,8 +215,6 @@ int UDP_server(struct sockaddr_in *server_addr){
     sendto(utf.sock, data, sizeof(data), 0, (struct sockaddr*)server_addr, sizeof(*server_addr));
 
     while(recv_socket(utf.sock, &utf.msg, &utf.from_addr) > 0){
-        
-        memset(data, '\0', sizeof(data));
 
         strcpy(data, utf.msg.msg_iov->iov_base);
         
@@ -227,6 +225,8 @@ int UDP_server(struct sockaddr_in *server_addr){
             UDP_Function((void *)&utf);
         else
             UDP_FC_COMPS_Fuction((void *)&utf, &fc, data, &utf.Compenstate_FC_MC);
+
+        memset(utf, 0, sizeof(utf));
 
     }
 
