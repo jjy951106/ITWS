@@ -226,7 +226,7 @@ int UDP_server(struct sockaddr_in *server_addr){
         else
             UDP_FC_COMPS_Fuction((void *)&utf, &fc, data, &utf.Compenstate_FC_MC);
 
-        memset(utf, 0, sizeof(utf));
+        memset(&utf, 0, sizeof(utf));
 
     }
 
