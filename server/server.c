@@ -217,16 +217,12 @@ int UDP_server(struct sockaddr_in *server_addr){
     while(recv_socket(utf.sock, &utf.msg, &utf.from_addr) > 0){
 
         strcpy(data, utf.msg.msg_iov->iov_base);
-        
-        printf("%s\n", data);
 
         /* same return 0 */
         if(!strcmp("offset", data))
             UDP_Function((void *)&utf);
         else
             UDP_FC_COMPS_Fuction((void *)&utf, &fc, data, &utf.Compenstate_FC_MC);
-
-        memset(&utf.msg.msg_iov->iov_base, 0, sizeof(utf.msg.msg_iov->iov_base));
 
     }
 
