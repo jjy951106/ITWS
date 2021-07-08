@@ -129,7 +129,6 @@ void UDP_FC_COMPS_Fuction(void *args, fc_offset *fc, char *buf, double *Compenst
 
     int64_t offset_tmp = _atoi(buf);
 
-    printf("\n--------------------------------------------------------\n");
     printf("(count, fc offset) : (%d, %lldms)\n", fc->count+1, offset_tmp);
     printf("--------------------------------------------------------\n");
 
@@ -232,7 +231,6 @@ int UDP_server(struct sockaddr_in *server_addr){
                 printf("\n--------------------------------------------------------\n");
                 printf("(end, start, interval) : (%ld, %ld, %ld)\n",
                 interval_end.tv_sec, interval_start.tv_sec, interval_end.tv_sec - interval_start.tv_sec);
-                printf("--------------------------------------------------------\n");
                 UDP_FC_COMPS_Fuction((void *)&utf, &fc, data, &utf.Compenstate_FC_MC, &interval_start);
             }
         }
