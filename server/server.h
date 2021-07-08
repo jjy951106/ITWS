@@ -23,6 +23,8 @@
 #define MEDIUM_TERM_SEC 0
 #define MEDIUM_TERM_NSEC 0 /* 10,000,000 */
 
+#define MINIMUM_INTERVAL_SEC 20
+
 /* default mc port 5005 */
 #define PORT 5005 
 

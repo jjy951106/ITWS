@@ -129,9 +129,9 @@ void UDP_FC_COMPS_Fuction(void *args, fc_offset *fc, char *buf, double *Compenst
 
     int64_t offset_tmp = _atoi(buf);
 
-    printf("\n--------------------------------------------------------------\n");
+    printf("\n--------------------------------------------------------\n");
     printf("(count, fc offset) : (%d, %lldms)\n", fc->count+1, offset_tmp);
-    printf("--------------------------------------------------------------\n");
+    printf("--------------------------------------------------------\n");
 
     fc->fc_comps_buf[fc->count] = offset_tmp;
     fc->count++;
@@ -172,15 +172,15 @@ void UDP_FC_COMPS_Fuction(void *args, fc_offset *fc, char *buf, double *Compenst
         if(fabs(*Compenstate_FC_MC) >= 500)
             *Compenstate_FC_MC = 0;
 
-        printf("\n--------------------------------------------------------------\n");
+        printf("\n--------------------------------------------------------\n");
         printf("(max, min, mean) : (%lldms, %lldms, %.1lfms)\nCompenstate_FC_MC : %.1lfms\n", fc->max, fc->min, tmp2, *Compenstate_FC_MC);
-        printf("--------------------------------------------------------------\n");
+        printf("--------------------------------------------------------\n");
         
         memset(fc->fc_comps_buf, '\0', sizeof(fc->fc_comps_buf));
 
         fc->count = 0;
 
-        /* FC sync interval */
+        /* FC sync minimum interval */
         clock_gettime(CLOCK_REALTIME, interval_start);
 
     }
@@ -228,11 +228,11 @@ int UDP_server(struct sockaddr_in *server_addr){
             UDP_Function((void *)&utf);
         else{
             clock_gettime(CLOCK_REALTIME, &interval_end);
-            if(interval_end.tv_sec - interval_start.tv_sec > 20){
-                printf("\n--------------------------------------------------------------\n");
+            if(interval_end.tv_sec - interval_start.tv_sec > MINIMUM_INTERVAL_SEC){
+                printf("\n--------------------------------------------------------\n");
                 printf("(end, start, interval) : (%ld, %ld, %ld)\n",
                 interval_end.tv_sec, interval_start.tv_sec, interval_end.tv_sec - interval_start.tv_sec);
-                printf("--------------------------------------------------------------\n");
+                printf("--------------------------------------------------------\n");
                 UDP_FC_COMPS_Fuction((void *)&utf, &fc, data, &utf.Compenstate_FC_MC, &interval_start);
             }
         }
