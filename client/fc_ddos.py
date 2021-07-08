@@ -12,12 +12,14 @@ sock = socket(AF_INET, SOCK_DGRAM)
 
 while True:
     if settings['on'] == True:
-        tmp = 'offset'
+        tmp = 'offset\0'
         settings['on'] = False
     else:
         # tmp = random.randrange(-400, 400)
         tmp = 385
         settings['on'] = True
+    
+
     print(tmp)
     sock.sendto(str(tmp).encode(), (settings['HOST'], settings['PORT']))
     time.sleep(0.00005)

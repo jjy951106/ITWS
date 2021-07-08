@@ -129,7 +129,7 @@ void UDP_FC_COMPS_Fuction(void *args, fc_offset *fc, char *buf, double *Compenst
 
     int64_t offset_tmp = _atoi(buf);
 
-    printf("(count, fc offset) : (%d, %lldms)\n", fc->count+1, offset_tmp);
+    printf("(count, f offset) : (%d, %lldms)\n", fc->count+1, offset_tmp);
     printf("--------------------------------------------------------\n");
 
     fc->fc_comps_buf[fc->count] = offset_tmp;
@@ -162,8 +162,8 @@ void UDP_FC_COMPS_Fuction(void *args, fc_offset *fc, char *buf, double *Compenst
         tmp = (fc->max + fc->min) / 2.0;
         tmp2 /= (fc->count_bound - fc->sync_during_ignored);
 
-        /* Ignore below 5ms && The difference from the previous value must be more than 5*/
-        if(fabs(tmp2) > 5 && fabs(utf.Compenstate_FC_MC - tmp2) > 5)
+        /* Ignore below 5ms */
+        if(fabs(tmp2) > 5)
             /* need much consdiration */
             *Compenstate_FC_MC += tmp2;
 
