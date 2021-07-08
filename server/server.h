@@ -21,12 +21,10 @@
 
 /* term between receive and transmit */
 #define MEDIUM_TERM_SEC 0
-#define MEDIUM_TERM_NSEC 10000000 /* 10,000,000 */
+#define MEDIUM_TERM_NSEC 0 /* 10,000,000 */
 
-/* default mc port 5005
-   default fc port 5006 */
+/* default mc port 5005 */
 #define PORT 5005 
-#define FC_COMPS_PORT_UDP 5006
 
 typedef struct udp_thread_factor{
 
