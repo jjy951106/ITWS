@@ -228,6 +228,7 @@ int UDP_server(struct sockaddr_in *server_addr){
             UDP_Function((void *)&utf);
         else{
             clock_gettime(CLOCK_REALTIME, &interval_end);
+            printf("(end, start) : (%ld, %ld)", interval_end.tv_sec, interval_start.tv_sec);
             if(interval_end.tv_sec - interval_start.tv_sec > 20)
                 UDP_FC_COMPS_Fuction((void *)&utf, &fc, data, &utf.Compenstate_FC_MC, &interval_start);
         }
