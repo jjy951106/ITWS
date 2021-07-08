@@ -16,9 +16,9 @@ while True:
         settings['on'] = False
     else:
         # tmp = random.randrange(-400, 400)
-        tmp = random.randrange(0, 40)
+        tmp = 0
         settings['on'] = True
     print(tmp)
     sock.sendto(str(tmp).encode(), (settings['HOST'], settings['PORT']))
-    time.sleep(0.005)
+    time.sleep(0.00005)
     

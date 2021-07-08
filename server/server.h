@@ -67,7 +67,7 @@ void *UDP_FC_COMPS_Thread(void *arg);
 /* UDP sync Function */
 void UDP_Function(void *args);
 
-void UDP_FC_COMPS_Fuction(void *args, fc_offset *fc, char *buf, double *Compenstate_FC_MC);
+void UDP_FC_COMPS_Fuction(void *args, fc_offset *fc, char *buf, double *Compenstate_FC_MC, struct timespec *interval_start);
 
 /* TCP protocol */
 int TCP_server(struct sockaddr_in *server_addr);

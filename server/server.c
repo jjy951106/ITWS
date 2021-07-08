@@ -119,7 +119,7 @@ void UDP_Function(void *args){
     return 0;
 }
 
-void UDP_FC_COMPS_Fuction(void *args, fc_offset *fc, char *buf, double *Compenstate_FC_MC){
+void UDP_FC_COMPS_Fuction(void *args, fc_offset *fc, char *buf, double *Compenstate_FC_MC, struct timespec *interval_start){
 
     udp_thread_factor utf = *((udp_thread_factor*)args);
     
@@ -180,6 +180,9 @@ void UDP_FC_COMPS_Fuction(void *args, fc_offset *fc, char *buf, double *Compenst
 
         fc->count = 0;
 
+        /* FC sync interval */
+        clock_gettime(CLOCK_REALTIME, interval_start);
+
     }
 
 }
@@ -196,7 +199,7 @@ int UDP_server(struct sockaddr_in *server_addr){
 
     udp_thread_factor utf = {0,};
 
-    struct timespec interval_start, interval_end;
+    struct timespec interval_start = {0,}, interval_end = {0,};
     
     if((utf.sock = socket(AF_INET, SOCK_DGRAM, 0)) == -1){
         printf("UDP socket() failed\n");
@@ -224,8 +227,9 @@ int UDP_server(struct sockaddr_in *server_addr){
         if(!strcmp("offset", data))
             UDP_Function((void *)&utf);
         else{
-            //if()
-            UDP_FC_COMPS_Fuction((void *)&utf, &fc, data, &utf.Compenstate_FC_MC);
+            clock_gettime(CLOCK_REALTIME, &interval_end);
+            if(interval_end.tv_sec - interval_start.tv_sec > 20)
+                UDP_FC_COMPS_Fuction((void *)&utf, &fc, data, &utf.Compenstate_FC_MC, &interval_start);
         }
     }
 
