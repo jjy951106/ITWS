@@ -195,6 +195,8 @@ int UDP_server(struct sockaddr_in *server_addr){
     pthread_t p_thread; // thread identifier
 
     udp_thread_factor utf = {0,};
+
+    struct timespec interval_start, interval_end;
     
     if((utf.sock = socket(AF_INET, SOCK_DGRAM, 0)) == -1){
         printf("UDP socket() failed\n");
@@ -221,9 +223,10 @@ int UDP_server(struct sockaddr_in *server_addr){
         /* same return 0 */
         if(!strcmp("offset", data))
             UDP_Function((void *)&utf);
-        else
+        else{
+            if()
             UDP_FC_COMPS_Fuction((void *)&utf, &fc, data, &utf.Compenstate_FC_MC);
-
+        }
     }
 
     return 0;
