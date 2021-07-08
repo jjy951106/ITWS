@@ -224,7 +224,7 @@ int UDP_server(struct sockaddr_in *server_addr){
         if(!strcmp("offset", data))
             UDP_Function((void *)&utf);
         else{
-            if()
+            //if()
             UDP_FC_COMPS_Fuction((void *)&utf, &fc, data, &utf.Compenstate_FC_MC);
         }
     }
