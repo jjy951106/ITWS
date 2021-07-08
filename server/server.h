@@ -1,4 +1,4 @@
-/* Multi_Thread */
+/* Function */
 
 #include <stdio.h>
 #include <stdlib.h> // exit(0) 'normal' exit(1) 'error'
