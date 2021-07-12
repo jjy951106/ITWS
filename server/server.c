@@ -129,7 +129,7 @@ void UDP_FC_COMPS_Fuction(void *args, fc_offset *fc, char *buf, double *Compenst
 
     int64_t offset_tmp = _atoi(buf);
 
-    printf("(count, f offset) : (%d, %lldms)\n", fc->count+1, offset_tmp);
+    printf("(count, fc offset) : (%d, %lldms)\n", fc->count+1, offset_tmp);
     printf("--------------------------------------------------------\n");
 
     fc->fc_comps_buf[fc->count] = offset_tmp;
