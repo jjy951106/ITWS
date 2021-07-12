@@ -16,7 +16,7 @@ while True:
         settings['on'] = False
     else:
         # tmp = random.randrange(-400, 400)
-        tmp = 0
+        tmp = 657
         settings['on'] = True
     
 
