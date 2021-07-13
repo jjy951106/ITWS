@@ -3,7 +3,7 @@
 
 int main(void){
 
-    system("ls");
+    system("sudo timedatectl set-ntp true");
 
     return 0;
 }
