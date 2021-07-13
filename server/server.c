@@ -188,7 +188,7 @@ void UDP_FC_COMPS_Fuction(void *args, fc_offset *fc, char *buf, double *Compenst
 
 int UDP_server(struct sockaddr_in *server_addr){
 
-    fc_offset fc = {0, 0, {0}, 0, 30, 7};
+    fc_offset fc = {0, 0, {0}, 0, 15, 5};
 
     int enabled = 1;
 
