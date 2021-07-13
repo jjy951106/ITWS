@@ -17,6 +17,10 @@ int main(int argc, char *argv[]){
     server_addr.sin_addr.s_addr = inet_addr(SERVER /* 192.168.0.160 */);
     server_addr.sin_port = htons(PORT /* 5005 */);
 
+    system("sudo timedatectl set-ntp false");
+    system("sudo timedatectl set-ntp false");
+    system("sudo timedatectl set-ntp false");
+
     if(argc >= 2) mode = atoi(argv[1]);   
 
     if(argc >= 3){
