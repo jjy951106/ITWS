@@ -221,8 +221,6 @@ void mode_1(int sock, struct sockaddr_in *server_addr, int protocol){
         offset[1] = 0;
 
         iterative_offset_calculated(sock, offset, server_addr, protocol);
-
-        printf("%ld %ld\n", offset[0], offset[1]);
         
         /* Not enough samples */
         if(offset[0] == 0 && offset[1] == 0)  
