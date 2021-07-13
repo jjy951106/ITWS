@@ -174,7 +174,7 @@ void iterative_offset_calculated(int sock, int32_t *offset, struct sockaddr_in *
 
         printf("%ld %ld\n", temp[0], temp[1]);
 
-        if(temp[0] > 5 /* second (5s or 10s) */){
+        if(abs(temp[0]) > 5 /* second (5s or 10s) */){
             initialized_T(sock, server_addr, protocol);
             return 0;
         }
