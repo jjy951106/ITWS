@@ -150,8 +150,6 @@ void offset_calculated(int sock, int *offset, struct sockaddr_in *server_addr, i
 
     offset[1] = ((T[1].tv_nsec - T[0].tv_nsec) - (T[3].tv_nsec - T[2].tv_nsec)) / 2;
 
-    printf("%ld %ld\n", offset[0], offset[1]);
-
     if(delay != NULL){
         /* delay (+ or -) */
         delay[0] = ((T[1].tv_sec - T[0].tv_sec) + (T[3].tv_sec - T[2].tv_sec)) / 2;
@@ -173,6 +171,8 @@ void iterative_offset_calculated(int sock, int32_t *offset, struct sockaddr_in *
     for(iter = 0; iter < ITERATION; iter++){
 
         offset_calculated(sock, temp, server_addr, protocol, NULL);
+
+        printf("%ld %ld\n", temp[0], temp[1]);
 
         if(temp[0] > 5 /* second (5s or 10s) */){
             initialized_T(sock, server_addr, protocol);
