@@ -205,6 +205,8 @@ void iterative_offset_calculated(int sock, int32_t *offset, struct sockaddr_in *
     /* DEVIATION decreasing to increase accuracy */
     if(iteration >= 7 && iteration <= ITERATION) 
         DEVIATION -= 5000000;  /* 5ms */
+
+    printf("%ld %ld\n", offset[0], offset[1]);
 }
 
 void mode_1(int sock, struct sockaddr_in *server_addr, int protocol){
