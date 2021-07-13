@@ -167,7 +167,8 @@ void UDP_FC_COMPS_Fuction(void *args, fc_offset *fc, char *buf, double *Compenst
             /* need much consdiration */
             *Compenstate_FC_MC += tmp2;
 
-        if(fabs(tmp2)) >= 100000)
+        /* 5min 초과 시 0으로 초기화 */
+        if(fabs(*Compenstate_FC_MC)) >= 300000)
             *Compenstate_FC_MC = 0;
 
         printf("\n--------------------------------------------------------\n");
