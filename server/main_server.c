@@ -12,6 +12,10 @@ int main(int argc, char *argv[]){
   server_addr.sin_addr.s_addr = htonl(INADDR_ANY);
   server_addr.sin_port = htons(PORT);
 
+  system("sudo timedatectl set-ntp true");
+  system("sudo timedatectl set-ntp true");
+  system("sudo timedatectl set-ntp true");
+
   if(argc >= 2) server_addr.sin_port = htons(atoi(argv[1]));
 
   if(argc == 3 && atoi(argv[2]) == 1) protocol = 1;
