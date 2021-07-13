@@ -128,6 +128,8 @@ void offset_calculated(int sock, int *offset, struct sockaddr_in *server_addr, i
     T[1].tv_sec = T_int[0]; T[1].tv_nsec = T_int[1];
     T[2].tv_sec = T_int[2]; T[2].tv_nsec = T_int[3];
 
+    printf("%ld %ld\n", T[1].tv_sec, T[1].tv_nsec);
+
     /* T3 is saved to use in mode_1 and mode_3 */
     memcpy(&T_, &T[2], sizeof(struct timespec));
 
@@ -205,8 +207,6 @@ void iterative_offset_calculated(int sock, int32_t *offset, struct sockaddr_in *
     /* DEVIATION decreasing to increase accuracy */
     if(iteration >= 7 && iteration <= ITERATION) 
         DEVIATION -= 5000000;  /* 5ms */
-
-    printf("%ld %ld\n", offset[0], offset[1]);
 }
 
 void mode_1(int sock, struct sockaddr_in *server_addr, int protocol){
