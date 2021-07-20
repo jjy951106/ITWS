@@ -3,6 +3,9 @@ import paho.mqtt.client as mqtt
 from pymavlink import mavutil
 from datetime import datetime as dt
 import time
+import psutil
+
+p = psutil.Process()
 
 settings = {
     'HOST'           : '1.239.197.74', # default
@@ -102,3 +105,6 @@ while True:
 
         print('(Transmission Packet, Interval) : ({}, {}s)\n(EnteredTime, SleepTime) : ({:.3f}, {:.3f})'\
               .format(settings['TransmitPacket'], settings['SendTerm'], enteredTime, settings['SendTerm'] - enteredTime))
+
+    p.memory_info()
+    print(p.memory_info())
