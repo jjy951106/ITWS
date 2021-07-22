@@ -172,7 +172,7 @@ void iterative_offset_calculated(int sock, int32_t *offset, struct sockaddr_in *
 
         offset_calculated(sock, temp, server_addr, protocol, NULL);
 
-        if(abs(temp[0]) > 5 /* second (5s or 10s) */){
+        if(abs(temp[0]) > 0 /* second (0s) */){
             initialized_T(sock, server_addr, protocol);
             return 0;
         }
@@ -297,11 +297,11 @@ void mode_3(int sock, struct sockaddr_in *server_addr, int protocol){
 
     /* need to add this code in python */
     /* It is related to synch problem that sleep term is more than 1.5 and iteration is pretty large as 10 */
-    for(i=0; i<10; i++){ // test needed
+    for(i=0; i<5; i++){ // test needed
         offset_calculated(sock, offset, server_addr, protocol, delay);
         if(abs(offset[1]) <= BOUNDARY)
             break;
-        sleep(0.5); // test needed
+        sleep(1); // test needed
     }
 
     /* delay reward in T3 server */

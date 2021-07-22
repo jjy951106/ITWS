@@ -153,6 +153,8 @@ class Monitor(Thing):
                     sock.sendto(str(tmp).encode(), ADDR)
                 count = 0
                 tmp = 0
+                
+                # Send timesync
                             
                 # startTime initialization
                 start = time.time()

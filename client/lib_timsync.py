@@ -73,13 +73,14 @@ def on_message(client, userdata, msg):
             rx_time = dt.timestamp(dt.now())
             if monitor.fc_lt != 0: monitor.fc_lt = (monitor.fc_lt + (rx_time - monitor.tx_time) / 2 ) / 2
             else: monitor.fc_lt = (rx_time - monitor.tx_time) / 2
+            
     else:
         # System time message reception
         rx_msg = mav.parse_char(mavMsg)
         now = float( dt.timestamp( dt.now() ) )
         monitor.fc_time = float( rx_msg.time_unix_usec / 1e6 )
         monitor.fc_offset = int( ( (monitor.fc_time + monitor.fc_lt) - now ) * 1000 )
-
+        
 
 def msw_mqtt_connect(broker_ip, port):
     global lib_topic
@@ -97,7 +98,7 @@ def msw_mqtt_connect(broker_ip, port):
     return lib_mqtt_client
 
 
-def send_data_to_msw (data_topic, obj_data):
+def send_data_to_msw(data_topic, obj_data):
     global lib_mqtt_client
 
     lib_mqtt_client.publish(data_topic, obj_data)

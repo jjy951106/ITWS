@@ -3,7 +3,7 @@ import time
 import random
 
 settings = {
-    'HOST'           : '203.253.128.177', # default
+    'HOST'           : '1.239.197.74', # default
     'PORT'           : 5005,
     'on'             : True,
 }
@@ -16,7 +16,7 @@ while True:
         settings['on'] = False
     else:
         # tmp = random.randrange(-400, 400)
-        tmp = 500
+        tmp = -86
         settings['on'] = True
 
     print(tmp)
