@@ -174,11 +174,13 @@ void iterative_offset_calculated(int sock, int32_t *offset, struct sockaddr_in *
 
         if(abs(temp[0]) > 0 /* second (0s) */){
             initialized_T(sock, server_addr, protocol);
+            sleep(1);
             return 0;
         }
 
-        /* DEVIATION */
-        if(abs(temp[0]) < 1 /* must be less than 1 second */ && abs(temp[1]) <= DEVIATION /* |ns| < DEVIATION */){
+        /* DEVIATION */ 
+        /* must be less than 1 second */
+        if(abs(temp[1]) <= DEVIATION /* |ns| < DEVIATION */){
             /* accumulated offset */
             offset[0] += temp[0];
             offset[1] += temp[1];
@@ -224,20 +226,14 @@ void mode_1(int sock, struct sockaddr_in *server_addr, int protocol){
         if(offset[0] == 0 && offset[1] == 0)  
             continue;
 
-        /* inner offset initialization algorithm */
-        else if(abs(offset[0]) > 0){
-            clock_settime(CLOCK_REALTIME, &T_);
-            sleep(1);
-            continue;
-        }
-
         /* SUCCESS */
         else if(offset[1] < BOUNDARY && offset[1] > BOUNDARY_) 
             break;
 
-        /* offset compensation */
+        /* get present time */
         clock_gettime(CLOCK_REALTIME, &C);
 
+        /* calculate offset compensation value */
         tmp = C.tv_nsec + offset[1];
 
         if(tmp >= 1000000000){
@@ -251,6 +247,7 @@ void mode_1(int sock, struct sockaddr_in *server_addr, int protocol){
         else
             C.tv_nsec = tmp;
 
+        /* offset compensation */
         clock_settime(CLOCK_REALTIME, &C);
 
     }
