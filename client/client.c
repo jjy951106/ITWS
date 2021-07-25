@@ -293,7 +293,7 @@ void mode_3(int sock, struct sockaddr_in *server_addr, int protocol){
     /* prevention of odd offset output */
     for(i=0; i<5; i++){ // test needed
         offset_calculated(sock, offset, server_addr, protocol, delay);
-        if(abs(offset[1]) <= thr)
+        if(abs(offset[0]) == 0 && abs(offset[1]) <= thr)
             break;
         sleep(1); // test needed
     }
@@ -428,7 +428,7 @@ int UDP_socket(struct sockaddr_in *server_addr, int mode, int protocol, int thr_
 
     if(setsockopt(sock, SOL_SOCKET, SO_TIMESTAMPNS, &enabled, sizeof(enabled)) < 0)
         err("SO_TIMESTAMPNS setsockopt()");
-
+ 
     if(setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, (char*)&tv, sizeof(struct timeval)) < 0)
         err("SO_RCVTIMEO setsockopt()");
 
