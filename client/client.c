@@ -269,8 +269,6 @@ void mode_2(int sock, struct sockaddr_in *server_addr, int protocol){
         offset[0] = 0;
         offset[1] = 0;
 
-        /* need to add this code in python */
-        /* It is related to synch problem that sleep term is more than 1.5 and iteration is pretty large as 10 */
         for(i=0; i<5; i++){ // test needed
             offset_calculated(sock, offset, server_addr, protocol, NULL);
             if(abs(offset[1]) <= thr)
@@ -292,8 +290,7 @@ void mode_3(int sock, struct sockaddr_in *server_addr, int protocol){
 
     int32_t tmp, offset[2] = { 0, }, delay[2] = { 0, };
 
-    /* need to add this code in python */
-    /* It is related to synch problem that sleep term is more than 1.5 and iteration is pretty large as 10 */
+    /* prevention of odd offset output */
     for(i=0; i<5; i++){ // test needed
         offset_calculated(sock, offset, server_addr, protocol, delay);
         if(abs(offset[1]) <= thr)
