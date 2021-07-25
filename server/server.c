@@ -132,9 +132,13 @@ void UDP_FC_COMPS_Fuction(void *args, fc_offset *fc, char *buf, double *Compenst
     printf("(count, fc offset) : (%d, %lldms)\n", fc->count+1, offset_tmp);
     printf("--------------------------------------------------------\n");
 
-    fc->fc_comps_buf[fc->count] = offset_tmp;
-    fc->count++;
-
+    /* allow more than absolute value of 5ms */
+    if(abs(offset_tmp) > 5){
+        fc->fc_comps_buf[fc->count] = offset_tmp;
+        fc->count++;
+    }
+ 
+    /* when a change is detected in the overall fc offset */
     if(fc->count >= fc->count_bound){
 
         /* find min and max values to compute mean value of fc offset */
@@ -162,13 +166,14 @@ void UDP_FC_COMPS_Fuction(void *args, fc_offset *fc, char *buf, double *Compenst
         tmp = (fc->max + fc->min) / 2.0;
         tmp2 /= (fc->count_bound - fc->sync_during_ignored);
 
-        /* Ignore below 5ms */
+        /* Although it is detected that the change of overall fc offset*/
+        /* Ignore below mean value of 5ms */
         if(fabs(tmp2) > 5)
             /* need much consdiration */
             *Compenstate_FC_MC += tmp2;
 
-        /* 5min 초과 시 0으로 초기화 */
-        if(fabs(*Compenstate_FC_MC) >= 300000)
+        /* 5min 초과 시 0으로 초기화 or trigger fc offset initialization */
+        if(fabs(*Compenstate_FC_MC) >= 300000 || offset_tmp == 123456789)
             *Compenstate_FC_MC = 0;
 
         printf("\n--------------------------------------------------------\n");
