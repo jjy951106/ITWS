@@ -24,8 +24,7 @@
 
 /* requirement : 5ms */
 
-#define BOUNDARY 5000000   // plus(ns)
-#define BOUNDARY_ -5000000 // minus(ns)
+#define BOUNDARY 5000000   // 5ms (ns)
 
 
 /* print error */

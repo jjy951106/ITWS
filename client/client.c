@@ -227,7 +227,7 @@ void mode_1(int sock, struct sockaddr_in *server_addr, int protocol){
             continue;
 
         /* SUCCESS */
-        else if(offset[1] < BOUNDARY && offset[1] > BOUNDARY_) 
+        else if(abs(offset[1]) < thr) 
             break;
 
         /* get present time */
@@ -273,12 +273,12 @@ void mode_2(int sock, struct sockaddr_in *server_addr, int protocol){
         /* It is related to synch problem that sleep term is more than 1.5 and iteration is pretty large as 10 */
         for(i=0; i<5; i++){ // test needed
             offset_calculated(sock, offset, server_addr, protocol, NULL);
-            if(abs(offset[1]) <= BOUNDARY)
+            if(abs(offset[1]) <= thr)
                 break;
             sleep(1); // test needed
         }
 
-        if(abs(offset[0]) > 1 || abs(offset[1]) > BOUNDARY) 
+        if(abs(offset[0]) > 1 || abs(offset[1]) > thr) 
             mode_1(sock, server_addr, protocol);
     }
 
@@ -296,7 +296,7 @@ void mode_3(int sock, struct sockaddr_in *server_addr, int protocol){
     /* It is related to synch problem that sleep term is more than 1.5 and iteration is pretty large as 10 */
     for(i=0; i<5; i++){ // test needed
         offset_calculated(sock, offset, server_addr, protocol, delay);
-        if(abs(offset[1]) <= BOUNDARY)
+        if(abs(offset[1]) <= thr)
             break;
         sleep(1); // test needed
     }

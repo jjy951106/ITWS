@@ -34,9 +34,13 @@ int main(int argc, char *argv[]){
 
     if(argc >= 4) server_addr.sin_port = htons(atoi(argv[3]));
 
+    /* (defalt, 1) : (UDP, TCP) */
     if(argc >= 5 && atoi(argv[4]) == 1) protocol = 1;
 
-    /* threshold default 5ms (input ms) */
+    /* threshold default 5ms*/
+    if(argc < 6) thr = BOUNDARY;
+
+    /* threshold input ms */
     if(argc == 6) thr = atoi(argv[5]) * 1000000; 
 
     if (argc > 6) {
