@@ -137,6 +137,13 @@ void UDP_FC_COMPS_Fuction(void *args, fc_offset *fc, char *buf, double *Compenst
         fc->fc_comps_buf[fc->count] = offset_tmp;
         fc->count++;
     }
+
+    /*  trigger fc offset initialization  */
+    if(offset_tmp == 123456789){
+        *Compenstate_FC_MC = 0;
+        fc->count = 0;
+        return 0;
+    }
  
     /* when a change is detected in the overall fc offset */
     if(fc->count >= fc->count_bound){
@@ -172,8 +179,8 @@ void UDP_FC_COMPS_Fuction(void *args, fc_offset *fc, char *buf, double *Compenst
             /* need much consdiration */
             *Compenstate_FC_MC += tmp2;
 
-        /* 5min 초과 시 0으로 초기화 or trigger fc offset initialization */
-        if(fabs(*Compenstate_FC_MC) >= 300000 || offset_tmp == 123456789)
+        /* 5min 초과 시 0으로 초기화 */
+        if(fabs(*Compenstate_FC_MC) >= 300000)
             *Compenstate_FC_MC = 0;
 
         printf("\n--------------------------------------------------------\n");
