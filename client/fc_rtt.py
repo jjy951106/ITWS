@@ -12,7 +12,7 @@ settings = {
     'PORT'           : 5005,
     'Connection'     : False,
     'ConnectionLink' : ['/dev/ttyACM0', '/dev/ttyACM1', '/dev/ttyAMA0',\
-                        '/dev/serial0', '/dev/serial1', 'COM6'],
+                        '/dev/serial0', '/dev/serial1', '/dev/ttyS0', 'COM6'],
     'DataRate'       : 2,
     'TransmitPacket' : 10,
     'SendTerm'       : 5,
