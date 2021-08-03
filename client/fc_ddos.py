@@ -17,7 +17,7 @@ while True:
     else:
         # tmp = random.randrange(-400, 400)
         tmp = 500
-        tmp = 123456789
+        # tmp = 123456789
         settings['on'] = True
 
     print(tmp)
