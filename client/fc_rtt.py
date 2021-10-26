@@ -11,8 +11,8 @@ settings = {
     'HOST'           : '1.239.197.74', # default
     'PORT'           : 5005,
     'Connection'     : False,
-    'ConnectionLink' : ['/dev/ttyACM0', '/dev/ttyACM1', '/dev/ttyAMA0',\
-                        '/dev/serial0', '/dev/serial1', '/dev/ttyS0', 'COM6'],
+    'ConnectionLink' : ['COM3', '/dev/ttyACM0', '/dev/ttyACM1', '/dev/ttyAMA0',\
+                        '/dev/serial0', '/dev/serial1', '/dev/ttyS0'],
     'DataRate'       : 2,
     'TransmitPacket' : 10,
     'SendTerm'       : 5,
@@ -23,7 +23,7 @@ count = connectionIndex = tmp = fc_lt = 0
 
 while(settings['Connection'] is False):
     try:
-        fc_port = mavutil.mavlink_connection(settings['ConnectionLink'][connectionIndex])
+        fc_port = mavutil.mavlink_connection(settings['ConnectionLink'][connectionIndex], baud=57600) # baud default 115200 이기 때문에 57600으로 바꿔줘야함
         settings['Connection'] = True
         print('Success OpenLink {}'.format(settings['ConnectionLink'][connectionIndex]))
     except:
