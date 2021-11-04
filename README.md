@@ -1,4 +1,4 @@
-Iterative Two-way time synchronization
+Iterative two-way time synchronization
 
 
 
